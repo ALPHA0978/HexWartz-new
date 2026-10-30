@@ -6,7 +6,7 @@ import './invitation.css';
 export default function InvitationLetter({ isOpen, onOpen, onClose, registrationUrl, whatsappUrl }) {
   const dialogRef = useRef(null);
   const endRef = useRef(null);
-  const autoOpened = useRef(false);
+  const autoOpened = useRef(isOpen);
   const reduceMotion = useReducedMotion();
   const duration = reduceMotion ? 0 : 0.7;
 
@@ -41,7 +41,7 @@ export default function InvitationLetter({ isOpen, onOpen, onClose, registration
         <p className="contact-eyebrow">ONE LAST DELIVERY FROM THE OWL POST</p>
         <h2 id="letter-finale-title">A little magic, addressed to you.</h2>
         <button className="letter-invitation-trigger" type="button" onClick={onOpen} aria-label="Open your HexWartz invitation letter">
-          <img src="/assets/v2/Gemini_Generated_Image_5hr7u45hr7u45hr7-clean.webp" alt="A parchment envelope with a crimson wax seal" width="220" height="220" loading="lazy" />
+          <img src="/assets/optimized/envelope.webp" alt="A parchment envelope with a crimson wax seal" width="220" height="220" loading="lazy" />
           <span>Break the seal <ArrowUpRight size={16} aria-hidden="true" /></span>
         </button>
         <p className="letter-finale-note">Your next chapter is waiting.</p>

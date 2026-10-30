@@ -1,5 +1,15 @@
 # Performance investigation
 
+## Current navigation and loading pass
+
+The navigation floats on a grey glass surface, hides after 12 pixels of downward travel, and returns on upward travel. An open menu or keyboard focus keeps it available. A single header control manages the soundtrack and sound effects. The travelling envelope has been removed from reading areas; the letter remains in the finale.
+
+The intro now streams the original video only after entry is requested, instead of downloading a complete Blob on page load. The poster is 49,556 bytes (previously 565,976). The desktop hero image is 105,462 bytes (previously 2,373,582), with a 49,166-byte mobile variant. The envelope is 9,618 bytes (previously 792,648); each house banner is about 28 KB rather than 407–447 KB. Original assets remain available.
+
+The letter and Framer Motion ship in a separate approximately 120 KB JavaScript chunk loaded near the footer. Initial JavaScript is approximately 200 KB, compared with approximately 328 KB before deferral. These are build sizes, not measured network timings. Font requests now use three families rather than five. Headings, card titles, body copy, and labels follow a 1.618 type scale, with single-pass opacity/transform reveals and reduced-motion support.
+
+Validation: production build; browser checks at 1280, 390, and 320 pixel widths; no horizontal overflow; hide/show navigation; mobile menu; single-control muting; progressive video playback; and automatic letter opening after a fast jump to the bottom. Existing browser regression scripts were updated for the new behavior and syntax-checked; the full automated browser suite was not run in this pass. Earlier entries below describe historical implementations and measurements, including the superseded complete-download video and flying-letter behavior.
+
 ## Video picture fidelity
 
 The supplied file, public copy and production copy have matching SHA-256 hashes, confirming that the site does not recompress the video. A page-level vignette nevertheless darkened the picture (up to 78% at the corners), and the exit fade added a 1.08 CSS scale. Those effects and permanent transform promotion were removed. Native full-screen cover fitting and natural clip completion remain.

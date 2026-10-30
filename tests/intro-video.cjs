@@ -25,6 +25,9 @@ const { chromium } = require('playwright');
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
       await page.goto('http://127.0.0.1:5194');
+      const initialSkip = await page.getByRole('button', { name: 'Skip cinematic prologue' }).boundingBox();
+      assert.equal(await page.locator('video').getAttribute('src'), null, 'Do not download video before entry');
+      await page.getByRole('button', { name: 'Enter HexWartz Hackathon', exact: true }).click();
       await page.waitForFunction(() => document.querySelector('video').readyState >= 2);
       const playedHash = await page.locator('video').evaluate(async video => {
         const bytes = await (await fetch(video.currentSrc)).arrayBuffer();
@@ -35,13 +38,10 @@ const { chromium } = require('playwright');
         window.__introPlayback = { ended: false, lastTime: 0 };
         video.addEventListener('ended', () => { window.__introPlayback = { ended: true, lastTime: video.currentTime }; });
       });
-      const initialSkip = await page.getByRole('button', { name: 'Skip cinematic prologue' }).boundingBox();
       const initial = await page.locator('video').evaluate(video => {
         const rect = video.getBoundingClientRect();
         return { duration: video.duration, sourceWidth: video.videoWidth, sourceHeight: video.videoHeight, width: rect.width, height: rect.height, left: rect.left, top: rect.top, fit: getComputedStyle(video).objectFit, paused: video.paused, error: video.error?.message };
       });
-      await page.getByRole('button', { name: 'Enter HexWartz Hackathon', exact: true }).focus();
-      await page.keyboard.press('Enter');
       await page.waitForFunction(() => document.querySelector('video')?.currentTime > 0.3);
       await page.waitForTimeout(1000);
       const playback = await page.locator('video').evaluate(video => ({ currentTime: video.currentTime, paused: video.paused, quality: video.getVideoPlaybackQuality().toJSON?.() || { total: video.getVideoPlaybackQuality().totalVideoFrames, dropped: video.getVideoPlaybackQuality().droppedVideoFrames }, error: video.error?.message }));

@@ -1,10 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowDown, ArrowUpRight, Award, BookOpen, CalendarDays, ChevronDown, ChevronRight, ChevronUp, Clock, Lock, MapPin, Menu, MessageCircle, Music, Phone, Scroll, ShieldAlert, Sparkles, Trophy, Users, Volume2, VolumeX, X, Zap } from 'lucide-react';
+import { ArrowUpRight, Award, BookOpen, CalendarDays, ChevronDown, ChevronRight, ChevronUp, Clock, Lock, MapPin, MessageCircle, Phone, Scroll, ShieldAlert, Sparkles, Trophy, Users, Zap } from 'lucide-react';
 import EnchantedAtmosphere from './EnchantedAtmosphere';
 import CinematicJourney from './CinematicJourney';
-import InvitationLetter from './InvitationLetter';
+import FloatingHeader from './FloatingHeader';
+import useTextReveal from './useTextReveal';
+const InvitationLetter = lazy(() => import('./InvitationLetter'));
 import './styles.css';
+import './refinements.css';
 
 const HOUSE_TRACKS = [
   {
@@ -14,8 +17,8 @@ const HOUSE_TRACKS = [
     tone: 'crimson',
     gem: 'Ruby',
     trait: 'Bravery & Audacity',
-    banner: '/assets/v2/house-banner-gryffindor.webp',
-    desc: 'Channel the courage of Godric Gryffindor to build intelligent agents, neural systems, and frontier AI/ML solutions.',
+    banner: '/assets/optimized/house-gryffindor.webp',
+    desc: 'Build intelligent agents and bold AI solutions.',
   },
   {
     house: 'Ravenclaw',
@@ -24,8 +27,8 @@ const HOUSE_TRACKS = [
     tone: 'blue',
     gem: 'Sapphire',
     trait: 'Wisdom & Intellect',
-    banner: '/assets/v2/house-banner-ravenclaw.webp',
-    desc: 'Apply profound wisdom and analytical ingenuity to heal the world with transformative healthcare technology.',
+    banner: '/assets/optimized/house-ravenclaw.webp',
+    desc: 'Build technology that makes better care possible.',
   },
   {
     house: 'Hufflepuff',
@@ -34,8 +37,8 @@ const HOUSE_TRACKS = [
     tone: 'gold',
     gem: 'Topaz',
     trait: 'Loyalty & Dedication',
-    banner: '/assets/v2/house-banner-hufflepuff.webp',
-    desc: 'Champion sustainable earth initiatives, clean energy, and ethical solutions with steadfast devotion.',
+    banner: '/assets/optimized/house-hufflepuff.webp',
+    desc: 'Create a cleaner, fairer, more sustainable future.',
   },
   {
     house: 'Slytherin',
@@ -44,8 +47,8 @@ const HOUSE_TRACKS = [
     tone: 'green',
     gem: 'Emerald',
     trait: 'Ambition & Cunning',
-    banner: '/assets/v2/house-banner-slytherin.webp',
-    desc: 'Wield raw ambition and boundless creativity to redefine possibilities across uncharted domains.',
+    banner: '/assets/optimized/house-slytherin.webp',
+    desc: 'Bring an original idea. Explore what comes next.',
   },
 ];
 
@@ -56,30 +59,29 @@ const WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/Fner6WCQeWkGPWcPmV60x7';
 
 const FAQ_DATA = [
   {
-    q: 'WHO CAN ENTER THE GATES OF HEXWARTZ?',
-    a: 'HexWartz is open to undergraduate and postgraduate collegiate wizards across all recognized institutions globally. Cross-college and cross-specialization alliances are strongly championed. Bring your official student guild credentials for on-campus verification.'
+    q: 'WHO CAN PARTICIPATE?',
+    a: 'Open to undergraduate and postgraduate students from recognized institutions. Bring your student ID for campus entry.'
   },
   {
-    q: 'WHAT ARE THE EXACT FELLOWSHIP REQUIREMENTS?',
-    a: 'Each fellowship must assemble 2 to 4 collegiate builders. Cross-college and cross-specialization teams are allowed and welcomed. Solo participants can be paired during discord sorting. Each wizard may commit allegiance to exactly one fellowship.'
+    q: 'HOW MANY MEMBERS IN A TEAM?',
+    a: 'Teams must have 4–6 students, with a minimum of 4. Cross-college and cross-discipline teams are welcome. Each participant may join one team.'
   },
   {
-    q: 'HOW DO THE TWO TOURNAMENT PHASES OPERATE?',
-    a: 'Phase 1 is a 100% free online PPT & architecture deck submission hosted on Unstop. The Ministry reviews all scrolls and shortlists the top fellowships. Shortlisted squads advance to Phase 2: the 24-hour offline crucible at Sharda University Agra on 13–14 November 2026.'
+    q: 'HOW DO THE TWO ROUNDS WORK?',
+    a: 'Submit your idea deck on Unstop. Shortlisted teams join the 24-hour finale at Sharda University Agra on 13–14 November 2026. Entry is ₹250 per member.'
   },
   {
-    q: 'IS THERE A REGISTRATION FEE FOR PARTICIPANTS?',
-    a: 'Phase 1 (The Online Owl Post) is completely FREE with zero galleons required. A nominal commitment fee of ₹250 per squad member is payable ONLY upon official shortlisting for the final offline crucible to guarantee your on-campus accommodations, dorms, and 24/7 feasts.'
+    q: 'WHAT IS THE ENTRY FEE?',
+    a: '₹250 per member, including stay, meals, and an event kit. Teams of 4, 5, or 6 pay ₹1,000, ₹1,250, or ₹1,500 respectively.'
   },
   {
-    q: 'WHAT ARE THE LAWS OF CODE ORIGINALITY?',
-    a: 'All prototype source code must be authored during the 24-hour physical hackathon. Open-source libraries, frameworks, public APIs, and declared generative AI assistants are permitted. Unattributed plagiarism triggers instant tribunal disqualification.'
+    q: 'WHAT CAN WE BUILD WITH?',
+    a: 'Build your prototype during the 24-hour hackathon. Open-source tools, APIs, and declared AI assistants are allowed. Plagiarism leads to disqualification.'
   }
 ];
 
 export function App() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [prophetPlaying, setProphetPlaying] = useState(false);
+  const [loadInvitation, setLoadInvitation] = useState(false);
   const [wardResonating, setWardResonating] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(0);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
@@ -91,44 +93,37 @@ export function App() {
   const [introVideoUrl, setIntroVideoUrl] = useState(undefined);
   const audioRef = useRef(null);
   const introVideoRef = useRef(null);
-  const envelopeRef = useRef(null);
   const soundContextRef = useRef(null);
   const revealTimerRef = useRef(0);
   const wardTimerRef = useRef(0);
-  const prophetTimerRef = useRef(0);
   const siteVisible = introState === 'exiting' || introState === 'entered';
-  const introComplete = introState === 'entered';
+  useTextReveal(siteVisible);
 
   useEffect(() => {
-    if (introComplete) return undefined;
-    const controller = new AbortController();
-    let videoUrl;
-    // Native preload may stop early; a local Blob keeps the complete short clip available.
-    fetch('/video/hexwartz-intro.mp4', { signal: controller.signal })
-      .then(response => {
-        if (!response.ok) throw new Error('Intro video download failed');
-        return response.blob();
-      })
-      .then(blob => {
-        if (controller.signal.aborted) return;
-        videoUrl = URL.createObjectURL(blob);
-        setIntroVideoUrl(videoUrl);
-      })
-      .catch(() => { if (!controller.signal.aborted) triggerSiteReveal(); });
-    return () => {
-      controller.abort();
-      if (videoUrl) URL.revokeObjectURL(videoUrl);
-    };
-  }, [introComplete]);
+    if (!siteVisible) return;
+    const footer = document.querySelector('.landing-footer');
+    if (!footer) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        // Fast scrolls can reach the placeholder before the letter chunk arrives.
+        const reachedEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 8;
+        setLoadInvitation(true);
+        if (reachedEnd) setInvitationOpen(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: '1200px 0px' });
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, [siteVisible]);
 
   useEffect(() => () => {
     clearTimeout(revealTimerRef.current);
     clearTimeout(wardTimerRef.current);
-    clearTimeout(prophetTimerRef.current);
     soundContextRef.current?.close();
   }, []);
 
   const getSoundContext = () => {
+    if (!isMusicPlaying) return null;
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return null;
     const ctx = soundContextRef.current || (soundContextRef.current = new AudioCtx());
@@ -155,6 +150,7 @@ export function App() {
     // 2. Play Web Audio wand chime
     playParchmentSound();
 
+    setIntroVideoUrl('/video/hexwartz-intro.mp4');
     setIntroState('buffering');
     startIntroPlayback();
   };
@@ -183,6 +179,7 @@ export function App() {
       audio.play().then(() => setIsMusicPlaying(true)).catch(() => {});
     } else {
       audio.pause();
+      soundContextRef.current?.suspend().catch(() => {});
       setIsMusicPlaying(false);
     }
   };
@@ -254,39 +251,6 @@ export function App() {
     wardTimerRef.current = setTimeout(() => setWardResonating(false), 2400);
   };
 
-  const toggleProphetAudio = () => {
-    try {
-      const ctx = getSoundContext();
-      if (ctx) {
-        const now = ctx.currentTime;
-        // Enchanted Patronus chime (A-major 9th harmonic arpeggio)
-        const notes = [440, 554.37, 659.25, 830.61, 1108.73, 1318.51];
-        notes.forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-
-          gain.gain.setValueAtTime(0, now + idx * 0.08);
-          gain.gain.linearRampToValueAtTime(0.08, now + idx * 0.08 + 0.03);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 1.8);
-
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-
-          osc.start(now + idx * 0.08);
-          osc.stop(now + idx * 0.08 + 1.85);
-          osc.onended = () => { osc.disconnect(); gain.disconnect(); };
-        });
-      }
-    } catch (e) {
-      console.warn('Audio playback error:', e);
-    }
-    setProphetPlaying(true);
-    clearTimeout(prophetTimerRef.current);
-    prophetTimerRef.current = setTimeout(() => setProphetPlaying(false), 2400);
-  };
-
   const handleCardTilt = (e) => {
     const card = e.currentTarget;
     if (!card._cardRect) {
@@ -322,199 +286,6 @@ export function App() {
     return () => observer.disconnect();
   }, [siteVisible]);
 
-  useEffect(() => {
-    const envelope = envelopeRef.current;
-    if (!envelope || !siteVisible) return undefined;
-
-    const hero = document.querySelector('.landing-hero');
-    const showcase = document.querySelector('.campus-showcase');
-    const heroArt = document.querySelector('.landing-hero-art');
-    const challenge = document.querySelector('.challenge-section');
-    const journey = document.querySelector('.journey-section');
-    const prizes = document.querySelector('.prizes-section');
-    const registration = document.querySelector('.registration-section');
-    const faq = document.querySelector('.faq-section');
-    const contact = document.querySelector('.contact-section');
-    const footer = document.querySelector('.landing-footer');
-    const sections = [hero, showcase, challenge, journey, prizes, registration, faq, contact, footer];
-    const sectionTops = new Map();
-    let envelopeWidth = envelope.offsetWidth;
-    let scrollDirty = true;
-
-    let frameId = 0;
-    let lastFrameTime = 0;
-    let currentPose = null;
-    let targetPose = null;
-    let attachedToOwl = true;
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const getAttachedPose = () => {
-      if (!heroArt) return null;
-
-      const rect = heroArt.getBoundingClientRect();
-      const scale = Math.max(0.14, Math.min(0.42, rect.width * 0.26 / Math.max(1, envelopeWidth)));
-      const visibleSizeRatio = envelopeWidth * scale / Math.max(1, rect.width);
-      // The envelope's top fold (about 27% across, 23% down its square image)
-      // sits on the beak; this keeps the owl's face clear as the art floats.
-      return {
-        x: ((rect.left + rect.width * (0.325 + (0.5 - 0.274) * visibleSizeRatio)) / window.innerWidth) * 100,
-        y: ((rect.top + rect.height * (0.275 + (0.5 - 0.23) * visibleSizeRatio)) / window.innerHeight) * 100,
-        scale,
-        rotate: -5,
-      };
-    };
-
-    const updateScrollTransition = () => {
-      if (!hero || !showcase || !heroArt || !envelope) return;
-
-      const viewportHeight = window.innerHeight;
-      const scrollY = window.scrollY;
-      const absoluteTop = (element) => {
-        if (!sectionTops.has(element)) sectionTops.set(element, element.getBoundingClientRect().top + scrollY);
-        return sectionTops.get(element);
-      };
-      const heroTop = absoluteTop(hero);
-      const venueTop = absoluteTop(showcase);
-      const heroBottom = absoluteTop(hero) + hero.offsetHeight;
-      const isNarrow = window.innerWidth <= 640;
-      const guideRightX = isNarrow ? 60 : 88;
-      const guideLeftX = isNarrow ? 40 : 12;
-      const guideTopY = isNarrow ? 22 : 24;
-      const guideBottomY = isNarrow ? 76 : 77;
-      const guideScale = isNarrow ? 0.46 : Math.min(0.48, Math.max(0.39, 300 / envelopeWidth));
-      const startAt = heroTop + viewportHeight * 0.18;
-      const attachedPose = getAttachedPose();
-      const releasePose = attachedPose
-        ? { ...attachedPose, y: (attachedPose.y * viewportHeight / 100 + scrollY - startAt) / viewportHeight * 100 }
-        : { x: 50, y: 50, scale: 0.2, rotate: -5 };
-      const stops = [
-        { at: startAt, ...releasePose },
-        { at: heroBottom - viewportHeight * 0.18, x: guideRightX, y: guideTopY, scale: guideScale, rotate: 16 },
-        { at: venueTop + viewportHeight * 0.18, x: guideRightX - (isNarrow ? 3 : 5), y: guideTopY + 4, scale: guideScale, rotate: -7 },
-        { at: venueTop + viewportHeight * 0.8, x: guideRightX, y: 52, scale: guideScale, rotate: 8 },
-        { at: venueTop + viewportHeight * 1.55, x: guideRightX - 8, y: guideBottomY, scale: guideScale, rotate: -8 },
-        { at: venueTop + showcase.offsetHeight - viewportHeight * 0.18, x: guideRightX, y: guideTopY, scale: guideScale, rotate: 16 },
-        { at: absoluteTop(challenge) + viewportHeight * 0.28, x: guideRightX, y: guideTopY, scale: guideScale, rotate: -7 },
-        { at: absoluteTop(challenge) + viewportHeight * 0.82, x: guideRightX, y: guideBottomY, scale: guideScale, rotate: 8 },
-        { at: absoluteTop(journey) + viewportHeight * 0.2, x: guideLeftX, y: guideBottomY, scale: guideScale, rotate: -12 },
-        { at: absoluteTop(journey) + viewportHeight * 0.78, x: guideLeftX, y: guideTopY, scale: guideScale, rotate: 9 },
-        ...(prizes ? [
-          { at: absoluteTop(prizes) + viewportHeight * 0.2, x: guideRightX, y: guideTopY, scale: guideScale, rotate: -8 },
-          { at: absoluteTop(prizes) + viewportHeight * 0.8, x: guideRightX - 6, y: guideBottomY, scale: guideScale, rotate: 10 },
-        ] : []),
-        { at: absoluteTop(registration) + viewportHeight * 0.2, x: guideLeftX + (isNarrow ? 12 : 10), y: guideBottomY, scale: guideScale, rotate: -10 },
-        ...(faq ? [
-          { at: absoluteTop(faq) + viewportHeight * 0.2, x: guideRightX, y: guideTopY, scale: guideScale, rotate: -7 },
-          { at: absoluteTop(faq) + viewportHeight * 0.7, x: guideRightX - 4, y: guideBottomY, scale: guideScale, rotate: 8 },
-        ] : []),
-        { at: absoluteTop(footer) + viewportHeight * 0.25, x: guideLeftX, y: guideTopY, scale: guideScale, rotate: 8 },
-      ];
-      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-      let pose;
-      attachedToOwl = scrollY < startAt;
-      if (attachedToOwl) {
-        pose = attachedPose || releasePose;
-      } else {
-        const segmentIndex = stops.findIndex((stop, index) => index < stops.length - 1 && scrollY <= stops[index + 1].at);
-        const segment = Math.max(0, segmentIndex < 0 ? stops.length - 2 : segmentIndex);
-        const from = stops[segment];
-        const to = stops[segment + 1];
-        const local = clamp((scrollY - from.at) / Math.max(1, to.at - from.at), 0, 1);
-        const eased = local * local * (3 - 2 * local);
-        const point = (a, b) => a + (b - a) * eased;
-        pose = {
-          x: point(from.x, to.x),
-          y: point(from.y, to.y),
-          scale: point(from.scale, to.scale),
-          rotate: point(from.rotate, to.rotate),
-        };
-      }
-
-      if (!attachedToOwl) {
-        pose.x = clamp(pose.x, isNarrow ? 38 : 8, isNarrow ? 62 : 92);
-        pose.y = clamp(pose.y, 12, 84);
-      }
-      targetPose = pose;
-      if (!currentPose) currentPose = { ...pose };
-      envelope.style.opacity = '1';
-      // Keep the floating letter clear of the contact details and call buttons.
-      const atContact = contact && scrollY + viewportHeight * 0.5 >= absoluteTop(contact);
-      envelope.style.visibility = atContact ? 'hidden' : 'visible';
-
-      const guiding = scrollY > heroTop + viewportHeight * 0.48;
-      envelope.classList.toggle('is-guiding', guiding);
-      envelope.style.pointerEvents = guiding ? 'auto' : 'none';
-    };
-
-    function animateEnvelope(time) {
-      frameId = 0;
-      if (document.hidden) return;
-      if (scrollDirty) {
-        scrollDirty = false;
-        updateScrollTransition();
-      }
-      if (!targetPose || !currentPose) {
-        frameId = 0;
-        return;
-      }
-      if (attachedToOwl) {
-        const pose = getAttachedPose();
-        if (pose) {
-          currentPose = pose;
-          targetPose = { ...currentPose };
-          envelope.style.transform = `translate3d(${currentPose.x}vw, ${currentPose.y}vh, 0) translate(-50%, -50%) scale(${currentPose.scale}) rotate(${currentPose.rotate}deg)`;
-        }
-        if (reduceMotion) {
-          frameId = 0;
-          return;
-        }
-        frameId = window.requestAnimationFrame(animateEnvelope);
-        return;
-      }
-      const delta = lastFrameTime ? Math.min(48, time - lastFrameTime) : 16;
-      lastFrameTime = time;
-      const ease = reduceMotion ? 1 : 1 - Math.exp(-delta / 90);
-      let remaining = 0;
-      ['x', 'y', 'scale', 'rotate'].forEach((key) => {
-        const difference = targetPose[key] - currentPose[key];
-        currentPose[key] += difference * ease;
-        remaining = Math.max(remaining, Math.abs(difference));
-      });
-      envelope.style.transform = `translate3d(${currentPose.x}vw, ${currentPose.y}vh, 0) translate(-50%, -50%) scale(${currentPose.scale}) rotate(${currentPose.rotate}deg)`;
-      if (remaining > 0.015) frameId = window.requestAnimationFrame(animateEnvelope);
-      else {
-        currentPose = { ...targetPose };
-        lastFrameTime = 0;
-        frameId = 0;
-      }
-    }
-
-    const scheduleUpdate = () => {
-      scrollDirty = true;
-      if (!frameId && !document.hidden) frameId = window.requestAnimationFrame(animateEnvelope);
-    };
-    const refreshLayout = () => {
-      sectionTops.clear();
-      envelopeWidth = envelope.offsetWidth;
-      scheduleUpdate();
-    };
-    // Layout changes (fonts, images, FAQ, menu) invalidate the cached document positions.
-    const observer = new ResizeObserver(refreshLayout);
-    sections.filter(Boolean).forEach(section => observer.observe(section));
-    observer.observe(document.querySelector('.landing-header'));
-    observer.observe(envelope);
-    window.addEventListener('scroll', scheduleUpdate, { passive: true });
-    window.addEventListener('resize', refreshLayout);
-    document.addEventListener('visibilitychange', scheduleUpdate);
-    scheduleUpdate();
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('scroll', scheduleUpdate);
-      window.removeEventListener('resize', refreshLayout);
-      document.removeEventListener('visibilitychange', scheduleUpdate);
-      if (frameId) window.cancelAnimationFrame(frameId);
-    };
-  }, [siteVisible]);
-
   return (
     <div className={`site-wrapper landing-page ${introState !== 'entered' ? 'intro-active' : ''}`}>
       
@@ -529,8 +300,8 @@ export function App() {
             ref={introVideoRef}
             className="intro-video-element"
             src={introVideoUrl}
-            poster="/assets/intro/video-poster.webp"
-            preload="auto"
+            poster="/assets/optimized/intro-poster.webp"
+            preload={introState === 'initial' ? 'none' : 'auto'}
             muted
             playsInline
             webkit-playsinline="true"
@@ -607,70 +378,9 @@ export function App() {
 
       {siteVisible && <>
       <EnchantedAtmosphere enabled={siteVisible} />
-      <a
-        ref={envelopeRef}
-        className="scrolling-seal-guide"
-        href="#invitation"
-        aria-label="Open your HexWartz invitation letter"
-        onClick={event => { event.preventDefault(); setInvitationOpen(true); }}
-        aria-haspopup="dialog"
-        title="Open your HexWartz invitation"
-      >
-        <img
-          className="scrolling-seal-envelope"
-          src="/assets/v2/Gemini_Generated_Image_5hr7u45hr7u45hr7-clean.webp"
-          alt=""
-          aria-hidden="true"
-        />
-        <span className="letter-guide-label"><span>THE OWL POST</span>Read your invitation<ArrowUpRight size={14} /></span>
-      </a>
 
-      <header className="landing-header">
-        <a className="landing-brand" href="#home" aria-label="HexWartz home">
-          <img
-            src="/assets/branding/hexwartz_crest_nav.webp"
-            alt="HexWartz Crest"
-            className="landing-brand-crest"
-            width="42"
-            height="42"
-            loading="eager"
-            decoding="async"
-          />
-          <div className="landing-brand-text">
-            <span className="landing-brand-name">HexWartz</span>
-            <span className="landing-brand-sub">Sharda University Agra</span>
-          </div>
-        </a>
-        <button
-          className="landing-menu-toggle"
-          type="button"
-          aria-expanded={menuOpen}
-          aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          {menuOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
-        <nav className={`landing-nav ${menuOpen ? 'is-open' : ''}`} aria-label="Main navigation">
-          <a href="#venue" onClick={() => setMenuOpen(false)}>Venue</a>
-          <a href="#houses" onClick={() => setMenuOpen(false)}>Houses & tracks</a>
-          <a href="#journey" onClick={() => setMenuOpen(false)}>Tournament codex</a>
-          <a href="#prizes" onClick={() => setMenuOpen(false)}>Prizes</a>
-          <a href="#registration" onClick={() => setMenuOpen(false)}>The Daily Prophet</a>
-          <a href="#faq" onClick={() => setMenuOpen(false)}>FAQ</a>
-          <a href="#contact" onClick={() => setMenuOpen(false)}>Contact Us</a>
-          <button 
-            type="button" 
-            className={`nav-music-toggle ${isMusicPlaying ? 'is-playing' : ''}`}
-            onClick={toggleMusic}
-            aria-label={isMusicPlaying ? 'Pause background music' : 'Play background music'}
-            title={isMusicPlaying ? 'Pause Hedwig\'s Theme' : 'Play Hedwig\'s Theme'}
-          >
-            {isMusicPlaying ? <Volume2 size={16} /> : <VolumeX size={16} />}
-            <span>{isMusicPlaying ? 'Music Playing' : 'Music Paused'}</span>
-          </button>
-          <a className="landing-nav-cta" href={UNSTOP_URL} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}>Register on Unstop <ArrowUpRight size={16} /></a>
-        </nav>
-      </header>
+
+      <FloatingHeader registrationUrl={UNSTOP_URL} isMusicPlaying={isMusicPlaying} onToggleMusic={toggleMusic} />
 
       <main id="home">
         <section className="landing-hero" aria-labelledby="hero-title">
@@ -682,7 +392,7 @@ export function App() {
                   className="hero-character-art"
                   src="/assets/v2/harry-hero.webp"
                   alt="Harry Potter with Hedwig"
-                  fetchPriority="high"
+                  fetchpriority="high"
                 />
                 <div className="hero-titles-wrap">
                   <div className="hero-title-main">HEXWARTZ</div>
@@ -702,12 +412,12 @@ export function App() {
                   className="hero-tagline-svg"
                   src="/assets/v2/embracing-arcane-code.svg"
                   alt="EMBRACING ARCANE CODE"
-                  fetchPriority="high"
+                  fetchpriority="high"
                 />
               </h1>
 
               <p className="hero-arcane-desc">
-                A 24-hour Harry Potter–themed hackathon for students who want to build real solutions to real-world problems.
+                24 hours. Four houses. One idea worth building.
               </p>
 
               <div className="hero-date-badge">
@@ -718,15 +428,11 @@ export function App() {
               <div className="hero-feature-pills">
                 <div className="hero-pill">
                   <Award size={15} className="hero-pill-icon" />
-                  <span>₹50,000+ PRIZE POOL</span>
+                  <span>₹50,000+ PRIZES</span>
                 </div>
                 <div className="hero-pill">
                   <Zap size={15} className="hero-pill-icon" />
-                  <span>24-HOUR FINALE</span>
-                </div>
-                <div className="hero-pill">
-                  <BookOpen size={15} className="hero-pill-icon" />
-                  <span>OPEN TO ALL COLLEGES</span>
+                  <span>24-HOUR BUILD</span>
                 </div>
               </div>
 
@@ -741,17 +447,7 @@ export function App() {
                   <span>REGISTER ON UNSTOP</span>
                   <ArrowUpRight size={18} strokeWidth={2.8} />
                 </a>
-                <a
-                  className="hero-btn-form"
-                  href={GOOGLE_FORM_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Direct Google Form Registration"
-                >
-                  <Scroll size={15} />
-                  <span>GOOGLE FORM</span>
-                  <ArrowUpRight size={14} />
-                </a>
+
                 <a
                   className="hero-btn-secondary"
                   href={GUIDELINES_URL}
@@ -786,9 +482,13 @@ export function App() {
               <div className="landing-art-frame">
                 <img
                   className="landing-hero-art"
-                  src="/assets/v2/Gemini_Generated_Image_qshw3cqshw3cqshw-clean%20%281%29.webp"
+                  src="/assets/optimized/hero-owl.webp"
+                  srcSet="/assets/optimized/hero-owl-small.webp 560w, /assets/optimized/hero-owl.webp 960w"
+                  sizes="(max-width: 900px) 58vw, 42vw"
+                  width="960"
+                  height="960"
                   alt="HexWartz crest with a moonlit castle, owl, and spellbook"
-                  fetchPriority="high"
+                  fetchpriority="high"
                 />
               </div>
               <div className="prize-callout">
@@ -811,19 +511,16 @@ export function App() {
             <img className="section-cutout" src="/assets/cutouts/sorting-hat.webp" alt="" aria-hidden="true" width="384" height="384" loading="lazy" decoding="async" />
             <p className="section-kicker section-kicker-sparkles">
               <Sparkles size={15} className="kicker-sparkle" />
-              <span>GREAT HALL ENCHANTMENT · LIVE HOUSE STANDINGS</span>
+              <span>FOUR HOUSES · FOUR CHALLENGE TRACKS</span>
               <Sparkles size={15} className="kicker-sparkle" />
             </p>
             <h2 id="challenge-title" className="section-title-3d">
-              <span className="title-3d-gold">THE HOUSE CUP</span>{' '}
-              <span className="title-3d-white">HOURGLASSES</span>
+              <span className="title-3d-gold">CHOOSE YOUR</span>{' '}
+              <span className="title-3d-white">HOUSE</span>
             </h2>
             <p className="section-desc-3d">
-              Four towering glass hourglasses stand in the Great Hall. Shimmering rubies, sapphires, topaz, and emeralds record every fellowship commit, architectural victory, and tribunal point. Choose your House and add to its tally.
+              Find your frontier. Let your house banner lead the way.
             </p>
-            <div className="house-section-subbar">
-              <span className="house-subbar-pill">CHOOSE YOUR FRONTIER · FOUR CHALLENGE TRACKS</span>
-            </div>
           </div>
           <div className="house-track-grid" id="houses">
             {HOUSE_TRACKS.map(({ house, track, mark, tone, gem, trait, banner, desc }) => (
@@ -833,6 +530,8 @@ export function App() {
                     src={banner}
                     alt={`${house} house banner`}
                     className="house-banner-img"
+                    width="293"
+                    height="440"
                     loading="lazy"
                   />
                 </div>
@@ -864,7 +563,7 @@ export function App() {
             <img className="section-cutout section-cutout-book" src="/assets/cutouts/spellbook-quill.webp" alt="" aria-hidden="true" width="384" height="384" loading="lazy" decoding="async" />
             <div className="section-kicker-sparkles">
               <Sparkles size={14} className="kicker-sparkle" />
-              <span>MINISTRY DECREE NO. 24 · OFFICIAL PROTOCOLS</span>
+              <span>YOUR QUEST AT A GLANCE</span>
               <Sparkles size={14} className="kicker-sparkle" />
             </div>
             <h2 id="codex-title" className="section-title-3d">
@@ -872,7 +571,7 @@ export function App() {
               <span className="title-3d-white">CODEX</span>
             </h2>
             <p className="section-desc-3d">
-              Clear directives and essential logistics for witches, wizards, and collegiate builders before entering the Great Hall at Sharda University Agra.
+              The team, the challenge, and everything included.
             </p>
           </div>
 
@@ -886,7 +585,7 @@ export function App() {
                 <div className="codex-pill-info">
                   <span className="codex-pill-label">THE FELLOWSHIP</span>
                   <span className="codex-pill-val">4–6 WIZARDS</span>
-                  <span className="codex-pill-sub">Inter-college squads welcome</span>
+                  <span className="codex-pill-sub">Minimum 4 members required</span>
                 </div>
               </div>
 
@@ -918,8 +617,8 @@ export function App() {
                 </div>
                 <div className="codex-pill-info">
                   <span className="codex-pill-label">REGISTRATION</span>
-                  <span className="codex-pill-val">100% FREE ENTRY</span>
-                  <span className="codex-pill-sub">Zero galleons required</span>
+                  <span className="codex-pill-val">₹250 / MEMBER</span>
+                  <span className="codex-pill-sub">Entry fee per participant</span>
                 </div>
               </div>
             </div>
@@ -941,38 +640,38 @@ export function App() {
                     <span className="codex-num">§ 01</span>
                   </div>
                   <h3 className="codex-card-title">ADMISSION & ELIGIBILITY</h3>
-                  <p className="codex-card-tagline">The law governing fellowship formation and campus admittance.</p>
+                  <p className="codex-card-tagline">Gather your fellowship.</p>
                 </div>
 
                 <ul className="codex-list">
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>Squad Composition (2–4 Members):</strong> Solo wizards can be paired during discord sorting. Official squads assemble 2 to 4 collegiate builders.
+                      <strong>4–6 members.</strong> Minimum 4 students per team.
                     </div>
                   </li>
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>Cross-Guild Synergy:</strong> Teammates can be from different colleges, graduation years, and disciplines (Tech, Design, Business).
+                      <strong>Mix your strengths.</strong> Cross-college and cross-discipline teams welcome.
                     </div>
                   </li>
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>Eligible Scholars:</strong> Open to all enrolled undergraduate & postgraduate students from any recognized university.
+                      <strong>Students welcome.</strong> Undergraduate and postgraduate.
                     </div>
                   </li>
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>Photo Identification:</strong> Every wizard must present their physical student ID card during campus gate clearance.
+                      <strong>Bring your student ID</strong> for campus entry.
                     </div>
                   </li>
                 </ul>
 
                 <div className="codex-card-footer">
-                  <span className="codex-footer-badge">✓ Zero Entry Cost</span>
+                  <span className="codex-footer-badge">₹250 per member</span>
                   <span className="codex-footer-note">Beginners & Veterans</span>
                 </div>
               </div>
@@ -992,32 +691,32 @@ export function App() {
                     <span className="codex-num">§ 02</span>
                   </div>
                   <h3 className="codex-card-title">THE TWO TRIALS</h3>
-                  <p className="codex-card-tagline">From online proposal to on-campus 24-hour prototype build.</p>
+                  <p className="codex-card-tagline">Pitch. Build. Present.</p>
                 </div>
 
                 <ul className="codex-list">
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>Round 1 (Virtual PPT Screening):</strong> Submit a 5–8 slide PPT on Unstop detailing your chosen House problem, tech stack, and impact.
+                      <strong>01 · Pitch online.</strong> Submit 5–8 slides on Unstop: idea, stack, and impact.
                     </div>
                   </li>
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>No Upfront Code:</strong> Round 1 tests vision, feasibility, and originality. No working code submission required for Round 1.
+                      <strong>Idea first.</strong> No prototype needed for Round 1.
                     </div>
                   </li>
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>Round 2 (24H Offline Finale):</strong> Shortlisted squads assemble at Sharda University Agra on 13–14 Nov to build functional software.
+                      <strong>02 · Build on campus.</strong> 24 hours at Sharda University Agra, 13–14 November.
                     </div>
                   </li>
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>Final Stage Demonstration:</strong> 3-minute live prototype demo + 2-minute Q&A in front of industry judges and mentors.
+                      <strong>Show your work.</strong> 3-minute demo + 2-minute Q&A.
                     </div>
                   </li>
                 </ul>
@@ -1043,38 +742,38 @@ export function App() {
                     <span className="codex-num">§ 03</span>
                   </div>
                   <h3 className="codex-card-title">PROVISIONS & SPOILS</h3>
-                  <p className="codex-card-tagline">Complimentary campus hospitality and bounty distribution.</p>
+                  <p className="codex-card-tagline">Focus on the build. We cover the essentials.</p>
                 </div>
 
                 <ul className="codex-list">
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>24/7 Great Hall Feasts:</strong> Complimentary hot meals (breakfast, lunch, dinner), midnight snacks, and unlimited tea & coffee.
+                      <strong>Stay fuelled.</strong> Meals, snacks, tea, and coffee.
                     </div>
                   </li>
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>High-Speed Leylines:</strong> Dedicated gigabit Wi-Fi, Ethernet lanes, and power strips provided at every squad desk.
+                      <strong>Stay connected.</strong> Wi-Fi, Ethernet, and power at your desk.
                     </div>
                   </li>
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>Resting Sanctuaries:</strong> Safe, separated sleeping and quiet resting dorms for male and female hackers with campus security.
+                      <strong>Rest on campus.</strong> Separate dorms with campus security.
                     </div>
                   </li>
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>₹50,000+ Prize Treasury:</strong> Direct cash bounties for House champions, official House Cup trophies, merch kits & certificates.
+                      <strong>₹50,000+ prize pool.</strong> Trophies, merch, and certificates.
                     </div>
                   </li>
                 </ul>
 
                 <div className="codex-card-footer">
-                  <span className="codex-footer-badge">✓ Meals & Stay Free</span>
+                  <span className="codex-footer-badge">✓ Meals & Stay Included</span>
                   <span className="codex-footer-note">Cash + Perks</span>
                 </div>
               </div>
@@ -1087,8 +786,8 @@ export function App() {
                   <Sparkles size={20} className="kicker-sparkle" />
                 </div>
                 <div className="codex-strip-text">
-                  <span className="codex-strip-heading">THE SORTING HAT AWAITS YOUR FELLOWSHIP</span>
-                  <span className="codex-strip-sub">Round 1 idea submissions are 100% free on Unstop. No entry fees at any stage.</span>
+                  <span className="codex-strip-heading">YOUR FELLOWSHIP STARTS HERE</span>
+                  <span className="codex-strip-sub">4–6 members · ₹250 per member · 24 hours</span>
                 </div>
               </div>
 
@@ -1149,7 +848,7 @@ export function App() {
                 <span className="title-3d-white">TREASURES</span>
               </h2>
               <p className="section-desc-3d">
-                The official tournament rewards and championship bounties remain sealed under an ancient Unbreakable Vow.
+                The vault is sealed. The full rewards reveal is coming soon.
               </p>
             </div>
 
@@ -1200,7 +899,7 @@ export function App() {
               </h3>
 
               <p className="proper-vault-status-desc">
-                Honors for the Grand Champions, Order of Merlin Laurels, and House Track Bounties will be officially unveiled as the November 2026 Hackathon approaches.
+                Cash prizes. House honours. A place in HexWartz history.
               </p>
 
               {/* Clean 3-Item Teaser Bar */}
@@ -1277,7 +976,7 @@ export function App() {
                     <div className="moving-photo-scanline" aria-hidden="true" />
                   </div>
                   <div className="prophet-photo-caption">
-                    ▲ A student fellowship dispatching their architecture scroll via owl post ahead of the 24-hour physical hackathon.
+                    The owl post is open. Your invitation awaits.
                   </div>
                 </div>
 
@@ -1289,22 +988,22 @@ export function App() {
                   </div>
 
                   <h3 className="prophet-headline">
-                    FOUR HOUSES ASSEMBLE: 24-HOUR PHYSICAL CRUCIBLE SANCTIONED AT SHARDA UNIVERSITY
+                    FOUR HOUSES. ONE UNFORGETTABLE BUILD.
                   </h3>
 
                   <div className="prophet-columns-dual">
                     <p className="prophet-para">
-                      The Ministry of Magical Innovation has formally authorized the 2026 HexWartz Hackathon at Sharda University Agra. Over 450 collegiate builders across India will converge for 24 non-stop hours to solve foundational challenges across Artificial Intelligence, Healthcare, Sustainable Development, and Open Innovation.
+                      13–14 November 2026. Sharda University Agra. Build with your fellowship across AI, healthcare, sustainability, or open innovation.
                     </p>
                     <p className="prophet-para">
-                      "This is not a theoretical symposium," declared the Grand Tribunal. "Every fellowship must deploy functional production code, interface with live leylines, and defend their working artifact during a 5-minute live tribunal interrogation."
+                      Arrive with an idea. Leave with a working prototype, new connections, and a story to tell.
                     </p>
                   </div>
 
                   {/* Official Proclamation Quote */}
                   <blockquote className="prophet-quote-box">
                     <p className="prophet-quote-text">
-                      “Choose your House. Form your fellowship. Build your working prototype before the final sand falls.”
+                      “The magic is in what you make.”
                     </p>
                     <cite className="prophet-quote-author">
                       — The Official HexWartz Proclamation
@@ -1314,12 +1013,12 @@ export function App() {
                   {/* Admissions & Logistics Gazette Ticker */}
                   <div className="prophet-admissions-ticker">
                     <div className="admissions-pill">
-                      <span className="admissions-pill-tag">ROUND 1</span>
-                      <strong className="admissions-pill-val">100% FREE</strong>
-                      <span className="admissions-pill-note">PPT Screening on Unstop</span>
+                      <span className="admissions-pill-tag">TEAM SIZE</span>
+                      <strong className="admissions-pill-val">4–6 <small>members</small></strong>
+                      <span className="admissions-pill-note">Minimum 4 members required</span>
                     </div>
                     <div className="admissions-pill">
-                      <span className="admissions-pill-tag">ROUND 2 · FINALE</span>
+                      <span className="admissions-pill-tag">ENTRY FEE</span>
                       <strong className="admissions-pill-val">₹250 <small>/ member</small></strong>
                       <span className="admissions-pill-note">24H Stay, Meals & Kit Included</span>
                     </div>
@@ -1364,15 +1063,7 @@ export function App() {
                       <ArrowUpRight size={15} />
                     </a>
 
-                    <button 
-                      type="button"
-                      className={`prophet-btn-audio ${prophetPlaying ? 'is-playing' : ''}`}
-                      onClick={toggleProphetAudio}
-                      aria-label="Play enchanted invitation chime"
-                    >
-                      <Volume2 size={16} className={prophetPlaying ? 'pulse-audio' : ''} />
-                      <span>{prophetPlaying ? 'OWL CALL CHIME RESONATING...' : 'HEAR THE INVITATION CHIME'}</span>
-                    </button>
+
                   </div>
 
                 </div>
@@ -1393,15 +1084,15 @@ export function App() {
             <div className="landing-section-head">
               <div className="section-kicker-sparkles">
                 <BookOpen size={14} className="kicker-sparkle" />
-                <span>HOGWARTS LIBRARY ARCHIVES · RESTRICTED REPOSITORIES</span>
+                <span>BEFORE YOU ENTER THE GREAT HALL</span>
                 <BookOpen size={14} className="kicker-sparkle" />
               </div>
               <h2 id="faq-title" className="section-title-3d">
-                <span className="title-3d-gold">RESTRICTED SECTION</span>{' '}
+                <span className="title-3d-gold">THE ESSENTIALS</span>{' '}
                 <span className="title-3d-white">FAQ</span>
               </h2>
               <p className="section-desc-3d">
-                Essential knowledge for every collegiate fellowship preparing to cross the threshold of HexWartz. Click any question parchment to unroll its answers.
+                A few answers before your adventure.
               </p>
             </div>
 
@@ -1454,14 +1145,14 @@ export function App() {
             <div className="landing-section-head">
               <div className="section-kicker-sparkles">
                 <Sparkles size={14} className="kicker-sparkle" aria-hidden="true" />
-                <span>THE OWL POST · YOUR CONNECTION TO HEXWARTZ</span>
+                <span>THE OWL POST</span>
                 <Sparkles size={14} className="kicker-sparkle" aria-hidden="true" />
               </div>
               <h2 id="contact-title" className="section-title-3d">
                 <span className="title-3d-gold">CONTACT</span>{' '}
                 <span className="title-3d-white">US</span>
               </h2>
-              <p className="section-desc-3d">Every great quest begins with a conversation. Reach out for help with registration, teams, or the tournament.</p>
+              <p className="section-desc-3d">A question about your quest? Reach out.</p>
             </div>
             <div className="contact-grid">
               <article className="contact-card">
@@ -1469,7 +1160,7 @@ export function App() {
                 <p className="contact-eyebrow">SEND AN OWL TO</p>
                 <h3>Vishal Hotwani</h3>
                 <a className="contact-number" href="tel:+917535040006">7535040006</a>
-                <p>Have a question about HexWartz? Get in touch and let us help you prepare for the adventure.</p>
+                <p>Registration & event queries.</p>
                 <a className="contact-action" href="tel:+917535040006"><Phone size={17} aria-hidden="true" /> Call Vishal</a>
               </article>
               <article className="contact-card">
@@ -1477,14 +1168,14 @@ export function App() {
                 <p className="contact-eyebrow">SEND AN OWL TO</p>
                 <h3>Yash Agarwal</h3>
                 <a className="contact-number" href="tel:+919411664116">9411664116</a>
-                <p>Need a hand with your tournament journey? Reach out for help with registration, teams, and event queries.</p>
+                <p>Teams & tournament queries.</p>
                 <a className="contact-action" href="tel:+919411664116"><Phone size={17} aria-hidden="true" /> Call Yash</a>
               </article>
               <article className="contact-card contact-card-community">
                 <div className="contact-icon" aria-hidden="true"><MessageCircle size={28} /></div>
                 <p className="contact-eyebrow">GATHER YOUR FELLOWSHIP</p>
                 <h3>Join the WhatsApp Group</h3>
-                <p>Connect with fellow builders and stay in the loop as your HexWartz journey unfolds.</p>
+                <p>Meet the builders. Follow the updates.</p>
                 <a className="contact-action contact-action-whatsapp" href={WHATSAPP_GROUP_URL} target="_blank" rel="noopener noreferrer">
                   <MessageCircle size={18} aria-hidden="true" /> Join WhatsApp Group <ArrowUpRight size={16} aria-hidden="true" />
                 </a>
@@ -1527,13 +1218,13 @@ export function App() {
         <a href="#home" className="back-to-top">Back to top ↑</a>
       </footer>
 
-      <InvitationLetter
+      {loadInvitation ? <Suspense fallback={<div className="letter-deferred-placeholder" />}><InvitationLetter
         isOpen={invitationOpen}
         onOpen={() => setInvitationOpen(true)}
         onClose={() => setInvitationOpen(false)}
         registrationUrl={UNSTOP_URL}
         whatsappUrl={WHATSAPP_GROUP_URL}
-      />
+      /></Suspense> : <div className="letter-deferred-placeholder" aria-hidden="true" />}
 
       </>}
 
@@ -1545,34 +1236,6 @@ export function App() {
         loop
       />
 
-      {/* Floating Magic Music Orb Controller */}
-      <div className="floating-music-orb-wrap">
-        <button
-          type="button"
-          className={`floating-music-orb ${isMusicPlaying ? 'is-playing' : 'is-muted'}`}
-          onClick={toggleMusic}
-          aria-label={isMusicPlaying ? 'Pause Hedwig\'s Theme' : 'Play Hedwig\'s Theme'}
-          title={isMusicPlaying ? 'Hedwig\'s Theme Playing · Tap to Mute' : 'Music Paused · Tap to Play'}
-        >
-          <div className="music-orb-inner">
-            {isMusicPlaying ? (
-              <>
-                <Volume2 size={19} className="music-orb-icon" />
-                <span className="music-orb-waves">
-                  <span className="wave-bar bar-1" />
-                  <span className="wave-bar bar-2" />
-                  <span className="wave-bar bar-3" />
-                </span>
-              </>
-            ) : (
-              <VolumeX size={19} className="music-orb-icon" />
-            )}
-          </div>
-          <span className="music-orb-label font-arcane">
-            {isMusicPlaying ? 'HEDWIG\'S THEME' : 'PLAY THEME'}
-          </span>
-        </button>
-      </div>
     </div>
   );
 }
