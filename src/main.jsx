@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowDown, ArrowUpRight, Award, BookOpen, CalendarDays, ChevronDown, ChevronRight, ChevronUp, Clock, Lock, MapPin, Menu, Music, Scroll, ShieldAlert, Sparkles, Trophy, Users, Volume2, VolumeX, X, Zap } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, Award, BookOpen, CalendarDays, ChevronDown, ChevronRight, ChevronUp, Clock, Lock, MapPin, Menu, MessageCircle, Music, Phone, Scroll, ShieldAlert, Sparkles, Trophy, Users, Volume2, VolumeX, X, Zap } from 'lucide-react';
 import EnchantedAtmosphere from './EnchantedAtmosphere';
 import CinematicJourney from './CinematicJourney';
+import InvitationLetter from './InvitationLetter';
 import './styles.css';
 
 const HOUSE_TRACKS = [
@@ -51,6 +52,7 @@ const HOUSE_TRACKS = [
 const UNSTOP_URL = 'https://unstop.com/hackathons/hexwartz-sharda-university-agra-1778042';
 const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeU1ffu-uS2pBMyXtaqqbC_gtS7Eo_JN3EWyOn6dtXTU1gSmA/viewform?usp=publish-editor';
 const GUIDELINES_URL = 'https://drive.google.com/file/d/1X1ZfZNC9EDlyI_O8IfjhlmZapnJ4y-pw/view?usp=sharing';
+const WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/Fner6WCQeWkGPWcPmV60x7';
 
 const FAQ_DATA = [
   {
@@ -63,7 +65,7 @@ const FAQ_DATA = [
   },
   {
     q: 'HOW DO THE TWO TOURNAMENT PHASES OPERATE?',
-    a: 'Phase 1 is a 100% free online PPT & architecture deck submission hosted on Unstop. The Ministry reviews all scrolls and shortlists the top fellowships. Shortlisted squads advance to Phase 2: the 36-hour offline crucible at Sharda University, Agra on 13–14 November 2026.'
+    a: 'Phase 1 is a 100% free online PPT & architecture deck submission hosted on Unstop. The Ministry reviews all scrolls and shortlists the top fellowships. Shortlisted squads advance to Phase 2: the 24-hour offline crucible at Sharda University Agra on 13–14 November 2026.'
   },
   {
     q: 'IS THERE A REGISTRATION FEE FOR PARTICIPANTS?',
@@ -71,26 +73,17 @@ const FAQ_DATA = [
   },
   {
     q: 'WHAT ARE THE LAWS OF CODE ORIGINALITY?',
-    a: 'All prototype source code must be authored during the 36-hour physical hackathon. Open-source libraries, frameworks, public APIs, and declared generative AI assistants are permitted. Unattributed plagiarism triggers instant tribunal disqualification.'
+    a: 'All prototype source code must be authored during the 24-hour physical hackathon. Open-source libraries, frameworks, public APIs, and declared generative AI assistants are permitted. Unattributed plagiarism triggers instant tribunal disqualification.'
   }
-];
-
-const GUIDE_STOPS = [
-  { id: 'venue', label: 'Visit the venue' },
-  { id: 'houses', label: 'Explore the houses' },
-  { id: 'journey', label: 'Tournament codex' },
-  { id: 'prizes', label: 'Triwizard treasures' },
-  { id: 'registration', label: 'The Daily Prophet' },
-  { id: 'faq', label: 'Restricted FAQ' },
 ];
 
 export function App() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeGuideIndex, setActiveGuideIndex] = useState(0);
   const [prophetPlaying, setProphetPlaying] = useState(false);
   const [wardResonating, setWardResonating] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(0);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [invitationOpen, setInvitationOpen] = useState(false);
   
   // Starting Screen & Video Sequence State
   const [introState, setIntroState] = useState('initial'); // 'initial' | 'buffering' | 'playing' | 'exiting' | 'entered'
@@ -341,8 +334,9 @@ export function App() {
     const prizes = document.querySelector('.prizes-section');
     const registration = document.querySelector('.registration-section');
     const faq = document.querySelector('.faq-section');
+    const contact = document.querySelector('.contact-section');
     const footer = document.querySelector('.landing-footer');
-    const sections = [hero, showcase, challenge, journey, prizes, registration, faq, footer];
+    const sections = [hero, showcase, challenge, journey, prizes, registration, faq, contact, footer];
     const sectionTops = new Map();
     let envelopeWidth = envelope.offsetWidth;
     let scrollDirty = true;
@@ -442,16 +436,13 @@ export function App() {
       targetPose = pose;
       if (!currentPose) currentPose = { ...pose };
       envelope.style.opacity = '1';
+      // Keep the floating letter clear of the contact details and call buttons.
+      const atContact = contact && scrollY + viewportHeight * 0.5 >= absoluteTop(contact);
+      envelope.style.visibility = atContact ? 'hidden' : 'visible';
 
-      const guideSections = [showcase, challenge, journey, prizes, registration].filter(Boolean);
-      let guideIndex = 0;
-      guideSections.forEach((section, index) => {
-        if (absoluteTop(section) <= scrollY + viewportHeight * 0.56) guideIndex = index;
-      });
       const guiding = scrollY > heroTop + viewportHeight * 0.48;
       envelope.classList.toggle('is-guiding', guiding);
       envelope.style.pointerEvents = guiding ? 'auto' : 'none';
-      setActiveGuideIndex((current) => current === guideIndex ? current : guideIndex);
     };
 
     function animateEnvelope(time) {
@@ -619,8 +610,11 @@ export function App() {
       <a
         ref={envelopeRef}
         className="scrolling-seal-guide"
-        href={`#${GUIDE_STOPS[activeGuideIndex].id}`}
-        aria-label={GUIDE_STOPS[activeGuideIndex].label}
+        href="#invitation"
+        aria-label="Open your HexWartz invitation letter"
+        onClick={event => { event.preventDefault(); setInvitationOpen(true); }}
+        aria-haspopup="dialog"
+        title="Open your HexWartz invitation"
       >
         <img
           className="scrolling-seal-envelope"
@@ -628,7 +622,7 @@ export function App() {
           alt=""
           aria-hidden="true"
         />
-        <span className="letter-guide-label"><span>THE OWL POST</span>{GUIDE_STOPS[activeGuideIndex].label}<ArrowUpRight size={14} /></span>
+        <span className="letter-guide-label"><span>THE OWL POST</span>Read your invitation<ArrowUpRight size={14} /></span>
       </a>
 
       <header className="landing-header">
@@ -644,7 +638,7 @@ export function App() {
           />
           <div className="landing-brand-text">
             <span className="landing-brand-name">HexWartz</span>
-            <span className="landing-brand-sub">Sharda University · Agra</span>
+            <span className="landing-brand-sub">Sharda University Agra</span>
           </div>
         </a>
         <button
@@ -663,6 +657,7 @@ export function App() {
           <a href="#prizes" onClick={() => setMenuOpen(false)}>Prizes</a>
           <a href="#registration" onClick={() => setMenuOpen(false)}>The Daily Prophet</a>
           <a href="#faq" onClick={() => setMenuOpen(false)}>FAQ</a>
+          <a href="#contact" onClick={() => setMenuOpen(false)}>Contact Us</a>
           <button 
             type="button" 
             className={`nav-music-toggle ${isMusicPlaying ? 'is-playing' : ''}`}
@@ -712,7 +707,7 @@ export function App() {
               </h1>
 
               <p className="hero-arcane-desc">
-                A two-day Harry Potter–themed hackathon for students who want to build real solutions to real-world problems.
+                A 24-hour Harry Potter–themed hackathon for students who want to build real solutions to real-world problems.
               </p>
 
               <div className="hero-date-badge">
@@ -727,7 +722,7 @@ export function App() {
                 </div>
                 <div className="hero-pill">
                   <Zap size={15} className="hero-pill-icon" />
-                  <span>2-DAY FINALE</span>
+                  <span>24-HOUR FINALE</span>
                 </div>
                 <div className="hero-pill">
                   <BookOpen size={15} className="hero-pill-icon" />
@@ -766,6 +761,14 @@ export function App() {
                 >
                   <BookOpen size={16} />
                   <span>GUIDELINE BOOK (PDF)</span>
+                </a>
+              </div>
+              <div className="hero-community-actions">
+                <a className="contact-action contact-action-whatsapp" href={WHATSAPP_GROUP_URL} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle size={18} aria-hidden="true" /> Join WhatsApp Group <ArrowUpRight size={16} aria-hidden="true" />
+                </a>
+                <a className="contact-action" href="#contact">
+                  <Phone size={16} aria-hidden="true" /> Contact Us
                 </a>
               </div>
             </div>
@@ -861,7 +864,7 @@ export function App() {
             <img className="section-cutout section-cutout-book" src="/assets/cutouts/spellbook-quill.webp" alt="" aria-hidden="true" width="384" height="384" loading="lazy" decoding="async" />
             <div className="section-kicker-sparkles">
               <Sparkles size={14} className="kicker-sparkle" />
-              <span>MINISTRY DECREE NO. 36 · OFFICIAL PROTOCOLS</span>
+              <span>MINISTRY DECREE NO. 24 · OFFICIAL PROTOCOLS</span>
               <Sparkles size={14} className="kicker-sparkle" />
             </div>
             <h2 id="codex-title" className="section-title-3d">
@@ -869,7 +872,7 @@ export function App() {
               <span className="title-3d-white">CODEX</span>
             </h2>
             <p className="section-desc-3d">
-              Clear directives and essential logistics for witches, wizards, and collegiate builders before entering the Great Hall at Sharda University, Agra.
+              Clear directives and essential logistics for witches, wizards, and collegiate builders before entering the Great Hall at Sharda University Agra.
             </p>
           </div>
 
@@ -894,7 +897,7 @@ export function App() {
                 <div className="codex-pill-info">
                   <span className="codex-pill-label">CRUCIBLE DATES</span>
                   <span className="codex-pill-val">13–14 NOV 2026</span>
-                  <span className="codex-pill-sub">36-Hour on-campus build</span>
+                  <span className="codex-pill-sub">24-Hour on-campus build</span>
                 </div>
               </div>
 
@@ -904,7 +907,7 @@ export function App() {
                 </div>
                 <div className="codex-pill-info">
                   <span className="codex-pill-label">SANCTUARY VENUE</span>
-                  <span className="codex-pill-val">SHARDA UNIV, AGRA</span>
+                  <span className="codex-pill-val">SHARDA UNIVERSITY AGRA</span>
                   <span className="codex-pill-sub">Full campus accommodation</span>
                 </div>
               </div>
@@ -989,7 +992,7 @@ export function App() {
                     <span className="codex-num">§ 02</span>
                   </div>
                   <h3 className="codex-card-title">THE TWO TRIALS</h3>
-                  <p className="codex-card-tagline">From online proposal to on-campus 36-hour prototype build.</p>
+                  <p className="codex-card-tagline">From online proposal to on-campus 24-hour prototype build.</p>
                 </div>
 
                 <ul className="codex-list">
@@ -1008,7 +1011,7 @@ export function App() {
                   <li className="codex-list-item">
                     <span className="codex-bullet-pip">✦</span>
                     <div>
-                      <strong>Round 2 (36H Offline Finale):</strong> Shortlisted squads assemble at Sharda University, Agra on 13–14 Nov to build functional software.
+                      <strong>Round 2 (24H Offline Finale):</strong> Shortlisted squads assemble at Sharda University Agra on 13–14 Nov to build functional software.
                     </div>
                   </li>
                   <li className="codex-list-item">
@@ -1274,7 +1277,7 @@ export function App() {
                     <div className="moving-photo-scanline" aria-hidden="true" />
                   </div>
                   <div className="prophet-photo-caption">
-                    ▲ A student fellowship dispatching their architecture scroll via owl post ahead of the 36-hour physical hackathon.
+                    ▲ A student fellowship dispatching their architecture scroll via owl post ahead of the 24-hour physical hackathon.
                   </div>
                 </div>
 
@@ -1286,12 +1289,12 @@ export function App() {
                   </div>
 
                   <h3 className="prophet-headline">
-                    FOUR HOUSES ASSEMBLE: 36-HOUR PHYSICAL CRUCIBLE SANCTIONED AT SHARDA UNIVERSITY
+                    FOUR HOUSES ASSEMBLE: 24-HOUR PHYSICAL CRUCIBLE SANCTIONED AT SHARDA UNIVERSITY
                   </h3>
 
                   <div className="prophet-columns-dual">
                     <p className="prophet-para">
-                      The Ministry of Magical Innovation has formally authorized the 2026 HexWartz Hackathon at Sharda University, Agra. Over 450 collegiate builders across India will converge for 36 non-stop hours to solve foundational challenges across Artificial Intelligence, Healthcare, Sustainable Development, and Open Innovation.
+                      The Ministry of Magical Innovation has formally authorized the 2026 HexWartz Hackathon at Sharda University Agra. Over 450 collegiate builders across India will converge for 24 non-stop hours to solve foundational challenges across Artificial Intelligence, Healthcare, Sustainable Development, and Open Innovation.
                     </p>
                     <p className="prophet-para">
                       "This is not a theoretical symposium," declared the Grand Tribunal. "Every fellowship must deploy functional production code, interface with live leylines, and defend their working artifact during a 5-minute live tribunal interrogation."
@@ -1318,7 +1321,7 @@ export function App() {
                     <div className="admissions-pill">
                       <span className="admissions-pill-tag">ROUND 2 · FINALE</span>
                       <strong className="admissions-pill-val">₹250 <small>/ member</small></strong>
-                      <span className="admissions-pill-note">36H Stay, Meals & Kit Included</span>
+                      <span className="admissions-pill-note">24H Stay, Meals & Kit Included</span>
                     </div>
                     <div className="admissions-pill">
                       <span className="admissions-pill-tag">PRIZE POOL</span>
@@ -1446,6 +1449,49 @@ export function App() {
 
           </div>
         </section>
+        <section className="landing-section contact-section" id="contact" aria-labelledby="contact-title">
+          <div className="contact-container">
+            <div className="landing-section-head">
+              <div className="section-kicker-sparkles">
+                <Sparkles size={14} className="kicker-sparkle" aria-hidden="true" />
+                <span>THE OWL POST · YOUR CONNECTION TO HEXWARTZ</span>
+                <Sparkles size={14} className="kicker-sparkle" aria-hidden="true" />
+              </div>
+              <h2 id="contact-title" className="section-title-3d">
+                <span className="title-3d-gold">CONTACT</span>{' '}
+                <span className="title-3d-white">US</span>
+              </h2>
+              <p className="section-desc-3d">Every great quest begins with a conversation. Reach out for help with registration, teams, or the tournament.</p>
+            </div>
+            <div className="contact-grid">
+              <article className="contact-card">
+                <div className="contact-icon" aria-hidden="true"><Phone size={26} /></div>
+                <p className="contact-eyebrow">SEND AN OWL TO</p>
+                <h3>Vishal Hotwani</h3>
+                <a className="contact-number" href="tel:+917535040006">7535040006</a>
+                <p>Have a question about HexWartz? Get in touch and let us help you prepare for the adventure.</p>
+                <a className="contact-action" href="tel:+917535040006"><Phone size={17} aria-hidden="true" /> Call Vishal</a>
+              </article>
+              <article className="contact-card">
+                <div className="contact-icon" aria-hidden="true"><Phone size={26} /></div>
+                <p className="contact-eyebrow">SEND AN OWL TO</p>
+                <h3>Yash Agarwal</h3>
+                <a className="contact-number" href="tel:+919411664116">9411664116</a>
+                <p>Need a hand with your tournament journey? Reach out for help with registration, teams, and event queries.</p>
+                <a className="contact-action" href="tel:+919411664116"><Phone size={17} aria-hidden="true" /> Call Yash</a>
+              </article>
+              <article className="contact-card contact-card-community">
+                <div className="contact-icon" aria-hidden="true"><MessageCircle size={28} /></div>
+                <p className="contact-eyebrow">GATHER YOUR FELLOWSHIP</p>
+                <h3>Join the WhatsApp Group</h3>
+                <p>Connect with fellow builders and stay in the loop as your HexWartz journey unfolds.</p>
+                <a className="contact-action contact-action-whatsapp" href={WHATSAPP_GROUP_URL} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle size={18} aria-hidden="true" /> Join WhatsApp Group <ArrowUpRight size={16} aria-hidden="true" />
+                </a>
+              </article>
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer className="landing-footer">
@@ -1461,7 +1507,7 @@ export function App() {
           />
           <div className="landing-brand-text">
             <span className="landing-brand-name">HexWartz</span>
-            <span className="landing-brand-sub">Sharda University · Agra</span>
+            <span className="landing-brand-sub">Sharda University Agra</span>
           </div>
         </a>
         
@@ -1471,11 +1517,23 @@ export function App() {
           <a href={GOOGLE_FORM_URL} target="_blank" rel="noopener noreferrer">Google Form Portal <ArrowUpRight size={13} /></a>
           <span className="footer-links-divider">·</span>
           <a href={GUIDELINES_URL} target="_blank" rel="noopener noreferrer">Official Guidelines (PDF) <ArrowUpRight size={13} /></a>
+          <span className="footer-links-divider">·</span>
+          <a href="#contact">Contact Us</a>
+          <span className="footer-links-divider">·</span>
+          <a href={WHATSAPP_GROUP_URL} target="_blank" rel="noopener noreferrer">WhatsApp Group <ArrowUpRight size={13} /></a>
         </div>
 
         <p>13–14 November 2026 <span>·</span> Anand School of Engineering and Technology</p>
         <a href="#home" className="back-to-top">Back to top ↑</a>
       </footer>
+
+      <InvitationLetter
+        isOpen={invitationOpen}
+        onOpen={() => setInvitationOpen(true)}
+        onClose={() => setInvitationOpen(false)}
+        registrationUrl={UNSTOP_URL}
+        whatsappUrl={WHATSAPP_GROUP_URL}
+      />
 
       </>}
 

@@ -2,8 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { ArrowDown, ArrowUpRight } from 'lucide-react';
 
 const SCENES = [
-  { name: 'The destination', kicker: 'YOUR REAL-WORLD GREAT HALL', title: 'A little magic. A real place to make it happen.', description: 'Sharda University, Agra. Two days of ideas, new friendships, and building something that matters.', image: '/assets/v2/sharda%20agra.jpg', alt: 'Sharda University Agra campus in daylight', origin: '50% 56%' },
-  { name: 'The possibility', kicker: '13–14 NOVEMBER 2026 · SHARDA UNIVERSITY, AGRA', title: 'The lights stay on. So does your imagination.', description: 'Four houses. One shared ambition. Your next chapter begins with what you create.', image: '/assets/scenes/campus-night.webp', alt: 'An artistic nighttime view of the Sharda University Agra campus', origin: '50% 52%' },
+  { name: 'The destination', kicker: 'YOUR REAL-WORLD GREAT HALL', title: 'A little magic. A real place to make it happen.', description: 'Sharda University Agra. 24 hours of ideas, new friendships, and building something that matters.', image: '/assets/v2/sharda%20agra.jpg', alt: 'Sharda University Agra campus in daylight', origin: '50% 56%' },
+  { name: 'The possibility', kicker: '13–14 NOVEMBER 2026 · SHARDA UNIVERSITY AGRA', title: 'The lights stay on. So does your imagination.', description: 'Four houses. One shared ambition. Your next chapter begins with what you create.', image: '/assets/scenes/campus-night.webp', alt: 'An artistic nighttime view of the Sharda University Agra campus', origin: '50% 52%' },
 ];
 
 const clamp = value => Math.max(0, Math.min(1, value));
@@ -95,7 +95,7 @@ export default function CinematicJourney({ enabled }) {
               <p className="journey-scene-kicker"><span>0{index + 1}</span>{scene.kicker}</p>
               <h2>{scene.title}</h2>
               <p className="journey-scene-description">{scene.description}</p>
-              {index === SCENES.length - 1 && <span className="journey-scene-note">A 36-hour on-campus hackathon</span>}
+              {index === SCENES.length - 1 && <span className="journey-scene-note">A 24-hour on-campus hackathon</span>}
             </div>
           </article>
         ))}
