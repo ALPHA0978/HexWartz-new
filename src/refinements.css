@@ -105,14 +105,6 @@ html { scroll-padding-top: 110px; }
 .landing-page .contact-card .contact-action { font-weight: 600; }
 .letter-deferred-placeholder { min-height: 500px; background: #080605; }
 
-/* The observer runs once; transforms and opacity keep the reveal off layout. */
-.text-reveal { opacity: 0; transform: translateY(20px); transition: opacity 650ms ease, transform 650ms cubic-bezier(0.22, 1, 0.36, 1); }
-.text-reveal.text-revealed { opacity: 1; transform: translateY(0); }
-.landing-section-head.text-reveal > :nth-child(2) { transition-delay: 80ms; }
-.landing-section-head.text-reveal > :nth-child(3) { transition-delay: 140ms; }
-.text-reveal.text-revealed > .section-title-3d { animation: title-arrival 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-@keyframes title-arrival { from { transform: translateY(10px); opacity: 0.3; } to { transform: translateY(0); opacity: 1; } }
-
 @media (max-width: 1200px) {
   .landing-page .floating-header { gap: 12px; justify-content: space-between; }
   .landing-page .floating-header .landing-nav { display: none; position: absolute; top: calc(100% + 10px); left: -1px; right: -1px; padding: 16px; border: 1px solid #ebd9ae26; border-radius: 18px; background: rgba(29, 29, 27, 0.97); max-height: calc(100dvh - 120px); overflow-y: auto; gap: 0; }

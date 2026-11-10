@@ -1,8 +1,18 @@
 # Performance investigation
 
+## Framer Motion skill pass
+
+Applied the user-provided [Framer Motion Animator skill](https://github.com/patricio0312rev/skillset/blob/main/templates/frontend/framer-motion-animator/SKILL.md): coordinated opacity/transform entrances, heading-word and list staggers, native spring feedback, and a spring parchment reveal with staggered invitation text and AnimatePresence dismissal. Content, section order, controls, links, and the travelling letter's original flight path remain intact. Word animation uses React-owned spans with ordinary whitespace and a flow wrapper so flex headings retain their original wrapping.
+
+The page-wide effects use Framer Motion's native mini entry point, one shared IntersectionObserver, delegated pointer listeners, and cleanup when reduced motion is requested. Animations run once, release their inline styles when finished, and pause when the document is hidden. The initial JavaScript is 206,212 bytes; the native orchestration and shared utilities add 15,279 bytes after entry. The 114,227-byte invitation chunk still loads on demand. These are minified build sizes, not a network or frame-rate benchmark.
+
+The travelling letter now measures the hero's base geometry only on layout changes. Its existing crest float is followed using the CSS animation clock and cached geometry instead of getBoundingClientRect on every animation frame. The cinematic scenes cache image references and update accessibility state only on chapter changes. Card tilts write at most once per animation frame, and the navigation avoids repeated React updates when its visibility has not changed.
+
+Validation: production build; desktop and 390/320px browser checks; no clipped headings or horizontal overflow; mobile menu; FAQ expansion; flying-letter click; Escape dismissal; and automatic opening at the page end after an earlier manual opening. Reduced-motion handling is implemented for both page-wide and invitation effects. Physical low-end hardware and a CPU-throttled frame-rate benchmark were not available in this pass.
+
 ## Current navigation and loading pass
 
-The navigation floats on a grey glass surface, hides after 12 pixels of downward travel, and returns on upward travel. An open menu or keyboard focus keeps it available. A single header control manages the soundtrack and sound effects. The travelling envelope has been removed from reading areas; the letter remains in the finale.
+The navigation floats on a grey glass surface, hides after 12 pixels of downward travel, and returns on upward travel. An open menu or keyboard focus keeps it available. A single header control manages the soundtrack and sound effects. The original travelling envelope and its scroll path are restored using the optimized image. Clicking it opens the invitation; the finale also opens automatically at the bottom.
 
 The intro now streams the original video only after entry is requested, instead of downloading a complete Blob on page load. The poster is 49,556 bytes (previously 565,976). The desktop hero image is 105,462 bytes (previously 2,373,582), with a 49,166-byte mobile variant. The envelope is 9,618 bytes (previously 792,648); each house banner is about 28 KB rather than 407–447 KB. Original assets remain available.
 

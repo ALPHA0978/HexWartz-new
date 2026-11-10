@@ -1,0 +1,32 @@
+/* Motion never changes layout dimensions, reading order, or the authored theme. */
+.landing-page [data-motion-pending] { opacity: 0; }
+.motion-word { display: inline-block; vertical-align: baseline; }
+.motion-text { min-width: 0; max-width: 100%; }
+.landing-page { font-kerning: normal; }
+.landing-page .section-title-3d { align-items: baseline; }
+.landing-page .section-title-3d > span {
+  font-synthesis: none;
+  letter-spacing: 0.035em;
+  word-spacing: 0.025em;
+}
+.landing-page .codex-card-title,
+.landing-page .track-title,
+.landing-page .prophet-headline,
+.landing-page .contact-card h3 { font-kerning: normal; text-wrap: balance; }
+.landing-page .section-desc-3d,
+.landing-page .track-desc,
+.landing-page .codex-card-tagline,
+.landing-page .codex-list-item,
+.landing-page .faq-answer-pane,
+.landing-page .contact-card > p { text-wrap: pretty; letter-spacing: -0.008em; }
+.landing-page .codex-card, .landing-page .house-card-body { display: flex; flex-direction: column; }
+.landing-page .codex-card-footer, .landing-page .house-card-footer { margin-top: auto; }
+.landing-page .contact-number,
+.landing-page .codex-pill-val,
+.landing-page .hero-date-badge,
+.landing-page .admissions-pill-val,
+.landing-page .prize-callout-val { font-variant-numeric: lining-nums tabular-nums; }
+.landing-page .faq-question-text { text-align: left; }
+@media (prefers-reduced-motion: reduce) {
+  .landing-page [data-motion-pending] { opacity: 1; }
+}

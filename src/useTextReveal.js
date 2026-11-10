@@ -1,20 +1,35 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export default function useTextReveal(enabled) {
+  const scope = useRef(null);
   useEffect(() => {
-    if (!enabled || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const targets = document.querySelectorAll('.landing-section-head, .journey-scene-copy, .prophet-headline, .contact-card, .hero-brand-lockup, .hero-arcane-desc, .hero-feature-pills');
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('text-revealed');
-        observer.unobserve(entry.target);
-      });
-    }, { threshold: 0.08 });
-    targets.forEach(element => { element.classList.add('text-reveal'); observer.observe(element); });
+    if (!enabled) return;
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let disposed = false;
+    let generation = 0;
+    let stopMotion;
+    const configure = async () => {
+      const current = ++generation;
+      stopMotion?.();
+      stopMotion = undefined;
+      if (preference.matches) return;
+      try {
+        const { setupSiteMotion } = await import('./motionOrchestrator');
+        if (!disposed && current === generation && !preference.matches && scope.current) {
+          stopMotion = setupSiteMotion(scope.current);
+        }
+      } catch {
+        // Animation is progressive enhancement; all content stays readable.
+      }
+    };
+    configure();
+    preference.addEventListener('change', configure);
     return () => {
-      observer.disconnect();
-      targets.forEach(element => element.classList.remove('text-reveal', 'text-revealed'));
+      disposed = true;
+      generation++;
+      preference.removeEventListener('change', configure);
+      stopMotion?.();
     };
   }, [enabled]);
+  return scope;
 }

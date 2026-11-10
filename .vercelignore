@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.git/
+.vercel/
+.env*
+.21st/
+tests/
+scripts/
+PERFORMANCE.md
+.DS_Store
+**/.DS_Store
+.polish-*/
+.*-build-check/

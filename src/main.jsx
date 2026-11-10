@@ -4,10 +4,13 @@ import { ArrowUpRight, Award, BookOpen, CalendarDays, ChevronDown, ChevronRight,
 import EnchantedAtmosphere from './EnchantedAtmosphere';
 import CinematicJourney from './CinematicJourney';
 import FloatingHeader from './FloatingHeader';
+import TravellingLetter from './TravellingLetter';
 import useTextReveal from './useTextReveal';
+import AnimatedWords from './AnimatedWords';
 const InvitationLetter = lazy(() => import('./InvitationLetter'));
 import './styles.css';
 import './refinements.css';
+import './motion.css';
 
 const HOUSE_TRACKS = [
   {
@@ -53,7 +56,6 @@ const HOUSE_TRACKS = [
 ];
 
 const UNSTOP_URL = 'https://unstop.com/hackathons/hexwartz-sharda-university-agra-1778042';
-const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeU1ffu-uS2pBMyXtaqqbC_gtS7Eo_JN3EWyOn6dtXTU1gSmA/viewform?usp=publish-editor';
 const GUIDELINES_URL = 'https://drive.google.com/file/d/1X1ZfZNC9EDlyI_O8IfjhlmZapnJ4y-pw/view?usp=sharing';
 const WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/Fner6WCQeWkGPWcPmV60x7';
 
@@ -96,8 +98,10 @@ export function App() {
   const soundContextRef = useRef(null);
   const revealTimerRef = useRef(0);
   const wardTimerRef = useRef(0);
+  const tiltFrameRef = useRef(0);
+  const pendingTiltRef = useRef(null);
   const siteVisible = introState === 'exiting' || introState === 'entered';
-  useTextReveal(siteVisible);
+  const motionScope = useTextReveal(siteVisible);
 
   useEffect(() => {
     if (!siteVisible) return;
@@ -119,6 +123,7 @@ export function App() {
   useEffect(() => () => {
     clearTimeout(revealTimerRef.current);
     clearTimeout(wardTimerRef.current);
+    cancelAnimationFrame(tiltFrameRef.current);
     soundContextRef.current?.close();
   }, []);
 
@@ -252,22 +257,26 @@ export function App() {
   };
 
   const handleCardTilt = (e) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const card = e.currentTarget;
     if (!card._cardRect) {
       card._cardRect = card.getBoundingClientRect();
     }
-    const rect = card._cardRect;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -4;
-    const rotateY = ((x - centerX) / centerX) * 4;
-    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-6px)`;
+    pendingTiltRef.current = { card, rect: card._cardRect, x: e.clientX, y: e.clientY };
+    if (tiltFrameRef.current) return;
+    tiltFrameRef.current = requestAnimationFrame(() => {
+      tiltFrameRef.current = 0;
+      const { card: target, rect, x, y } = pendingTiltRef.current;
+      const rotateX = ((y - rect.top - rect.height / 2) / (rect.height / 2)) * -4;
+      const rotateY = ((x - rect.left - rect.width / 2) / (rect.width / 2)) * 4;
+      target.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-6px)`;
+    });
   };
 
   const handleCardTiltReset = (e) => {
     const card = e.currentTarget;
+    cancelAnimationFrame(tiltFrameRef.current);
+    tiltFrameRef.current = 0;
     card.style.transform = '';
     card._cardRect = null;
   };
@@ -287,7 +296,7 @@ export function App() {
   }, [siteVisible]);
 
   return (
-    <div className={`site-wrapper landing-page ${introState !== 'entered' ? 'intro-active' : ''}`}>
+    <div ref={motionScope} className={`site-wrapper landing-page ${introState !== 'entered' ? 'intro-active' : ''}`}>
       
       {/* =========================================================================
           CINEMATIC INTRO STARTING SCREEN (VIDEO & PARCHMENT ENTER BUTTON)
@@ -378,6 +387,7 @@ export function App() {
 
       {siteVisible && <>
       <EnchantedAtmosphere enabled={siteVisible} />
+      <TravellingLetter enabled={siteVisible} onOpen={() => { setLoadInvitation(true); setInvitationOpen(true); }} />
 
 
       <FloatingHeader registrationUrl={UNSTOP_URL} isMusicPlaying={isMusicPlaying} onToggleMusic={toggleMusic} />
@@ -515,8 +525,8 @@ export function App() {
               <Sparkles size={15} className="kicker-sparkle" />
             </p>
             <h2 id="challenge-title" className="section-title-3d">
-              <span className="title-3d-gold">CHOOSE YOUR</span>{' '}
-              <span className="title-3d-white">HOUSE</span>
+              <span className="title-3d-gold"><AnimatedWords>CHOOSE YOUR</AnimatedWords></span>{' '}
+              <span className="title-3d-white"><AnimatedWords>HOUSE</AnimatedWords></span>
             </h2>
             <p className="section-desc-3d">
               Find your frontier. Let your house banner lead the way.
@@ -543,7 +553,7 @@ export function App() {
                       <span className="house-gem-badge">{gem}</span>
                     </div>
                   </div>
-                  <h3 className="track-title">{track}</h3>
+                  <h3 className="track-title"><AnimatedWords>{track}</AnimatedWords></h3>
                   <span className="track-rule" />
                   <p className="track-desc">{desc}</p>
                   <div className="house-card-footer">
@@ -567,8 +577,8 @@ export function App() {
               <Sparkles size={14} className="kicker-sparkle" />
             </div>
             <h2 id="codex-title" className="section-title-3d">
-              <span className="title-3d-gold">TOURNAMENT</span>{' '}
-              <span className="title-3d-white">CODEX</span>
+              <span className="title-3d-gold"><AnimatedWords>TOURNAMENT</AnimatedWords></span>{' '}
+              <span className="title-3d-white"><AnimatedWords>CODEX</AnimatedWords></span>
             </h2>
             <p className="section-desc-3d">
               The team, the challenge, and everything included.
@@ -639,7 +649,7 @@ export function App() {
                     <span className="codex-directive-badge">DIRECTIVE 01</span>
                     <span className="codex-num">§ 01</span>
                   </div>
-                  <h3 className="codex-card-title">ADMISSION & ELIGIBILITY</h3>
+                  <h3 className="codex-card-title"><AnimatedWords>ADMISSION & ELIGIBILITY</AnimatedWords></h3>
                   <p className="codex-card-tagline">Gather your fellowship.</p>
                 </div>
 
@@ -690,7 +700,7 @@ export function App() {
                     <span className="codex-directive-badge">DIRECTIVE 02</span>
                     <span className="codex-num">§ 02</span>
                   </div>
-                  <h3 className="codex-card-title">THE TWO TRIALS</h3>
+                  <h3 className="codex-card-title"><AnimatedWords>THE TWO TRIALS</AnimatedWords></h3>
                   <p className="codex-card-tagline">Pitch. Build. Present.</p>
                 </div>
 
@@ -741,7 +751,7 @@ export function App() {
                     <span className="codex-directive-badge">DIRECTIVE 03</span>
                     <span className="codex-num">§ 03</span>
                   </div>
-                  <h3 className="codex-card-title">PROVISIONS & SPOILS</h3>
+                  <h3 className="codex-card-title"><AnimatedWords>PROVISIONS & SPOILS</AnimatedWords></h3>
                   <p className="codex-card-tagline">Focus on the build. We cover the essentials.</p>
                 </div>
 
@@ -803,17 +813,6 @@ export function App() {
                   <ArrowUpRight size={16} />
                 </a>
                 <a 
-                  href={GOOGLE_FORM_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="codex-btn-tertiary"
-                  aria-label="Direct Google Form Entry"
-                >
-                  <Scroll size={15} />
-                  <span>GOOGLE FORM</span>
-                  <ArrowUpRight size={14} />
-                </a>
-                <a 
                   href={GUIDELINES_URL}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -844,8 +843,8 @@ export function App() {
                 <Sparkles size={14} className="kicker-sparkle" />
               </div>
               <h2 id="prizes-title" className="section-title-3d">
-                <span className="title-3d-gold">TRIWIZARD</span>{' '}
-                <span className="title-3d-white">TREASURES</span>
+                <span className="title-3d-gold"><AnimatedWords>TRIWIZARD</AnimatedWords></span>{' '}
+                <span className="title-3d-white"><AnimatedWords>TREASURES</AnimatedWords></span>
               </h2>
               <p className="section-desc-3d">
                 The vault is sealed. The full rewards reveal is coming soon.
@@ -894,9 +893,9 @@ export function App() {
                 <Sparkles size={13} />
               </div>
 
-              <h3 className="proper-vault-status-title">
+              <h3 className="proper-vault-status-title"><AnimatedWords>
                 REWARD STRUCTURE REVEALING SOON
-              </h3>
+              </AnimatedWords></h3>
 
               <p className="proper-vault-status-desc">
                 Cash prizes. House honours. A place in HexWartz history.
@@ -987,9 +986,9 @@ export function App() {
                     <span>OFFICIAL MINISTRY DISPATCH · NOVEMBER 2026</span>
                   </div>
 
-                  <h3 className="prophet-headline">
+                  <h3 className="prophet-headline"><AnimatedWords>
                     FOUR HOUSES. ONE UNFORGETTABLE BUILD.
-                  </h3>
+                  </AnimatedWords></h3>
 
                   <div className="prophet-columns-dual">
                     <p className="prophet-para">
@@ -1042,17 +1041,6 @@ export function App() {
                     </a>
 
                     <a 
-                      href={GOOGLE_FORM_URL}
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="prophet-btn-form"
-                    >
-                      <Scroll size={15} />
-                      <span>GOOGLE FORM ENTRY</span>
-                      <ArrowUpRight size={15} />
-                    </a>
-
-                    <a 
                       href={GUIDELINES_URL}
                       target="_blank" 
                       rel="noopener noreferrer"
@@ -1088,8 +1076,8 @@ export function App() {
                 <BookOpen size={14} className="kicker-sparkle" />
               </div>
               <h2 id="faq-title" className="section-title-3d">
-                <span className="title-3d-gold">THE ESSENTIALS</span>{' '}
-                <span className="title-3d-white">FAQ</span>
+                <span className="title-3d-gold"><AnimatedWords>THE ESSENTIALS</AnimatedWords></span>{' '}
+                <span className="title-3d-white"><AnimatedWords>FAQ</AnimatedWords></span>
               </h2>
               <p className="section-desc-3d">
                 A few answers before your adventure.
@@ -1149,8 +1137,8 @@ export function App() {
                 <Sparkles size={14} className="kicker-sparkle" aria-hidden="true" />
               </div>
               <h2 id="contact-title" className="section-title-3d">
-                <span className="title-3d-gold">CONTACT</span>{' '}
-                <span className="title-3d-white">US</span>
+                <span className="title-3d-gold"><AnimatedWords>CONTACT</AnimatedWords></span>{' '}
+                <span className="title-3d-white"><AnimatedWords>US</AnimatedWords></span>
               </h2>
               <p className="section-desc-3d">A question about your quest? Reach out.</p>
             </div>
@@ -1158,7 +1146,7 @@ export function App() {
               <article className="contact-card">
                 <div className="contact-icon" aria-hidden="true"><Phone size={26} /></div>
                 <p className="contact-eyebrow">SEND AN OWL TO</p>
-                <h3>Vishal Hotwani</h3>
+                <h3><AnimatedWords>Vishal Hotwani</AnimatedWords></h3>
                 <a className="contact-number" href="tel:+917535040006">7535040006</a>
                 <p>Registration & event queries.</p>
                 <a className="contact-action" href="tel:+917535040006"><Phone size={17} aria-hidden="true" /> Call Vishal</a>
@@ -1166,7 +1154,7 @@ export function App() {
               <article className="contact-card">
                 <div className="contact-icon" aria-hidden="true"><Phone size={26} /></div>
                 <p className="contact-eyebrow">SEND AN OWL TO</p>
-                <h3>Yash Agarwal</h3>
+                <h3><AnimatedWords>Yash Agarwal</AnimatedWords></h3>
                 <a className="contact-number" href="tel:+919411664116">9411664116</a>
                 <p>Teams & tournament queries.</p>
                 <a className="contact-action" href="tel:+919411664116"><Phone size={17} aria-hidden="true" /> Call Yash</a>
@@ -1174,7 +1162,7 @@ export function App() {
               <article className="contact-card contact-card-community">
                 <div className="contact-icon" aria-hidden="true"><MessageCircle size={28} /></div>
                 <p className="contact-eyebrow">GATHER YOUR FELLOWSHIP</p>
-                <h3>Join the WhatsApp Group</h3>
+                <h3><AnimatedWords>Join the WhatsApp Group</AnimatedWords></h3>
                 <p>Meet the builders. Follow the updates.</p>
                 <a className="contact-action contact-action-whatsapp" href={WHATSAPP_GROUP_URL} target="_blank" rel="noopener noreferrer">
                   <MessageCircle size={18} aria-hidden="true" /> Join WhatsApp Group <ArrowUpRight size={16} aria-hidden="true" />
@@ -1204,8 +1192,6 @@ export function App() {
         
         <div className="footer-links-row">
           <a href={UNSTOP_URL} target="_blank" rel="noopener noreferrer">Unstop Portal <ArrowUpRight size={13} /></a>
-          <span className="footer-links-divider">·</span>
-          <a href={GOOGLE_FORM_URL} target="_blank" rel="noopener noreferrer">Google Form Portal <ArrowUpRight size={13} /></a>
           <span className="footer-links-divider">·</span>
           <a href={GUIDELINES_URL} target="_blank" rel="noopener noreferrer">Official Guidelines (PDF) <ArrowUpRight size={13} /></a>
           <span className="footer-links-divider">·</span>

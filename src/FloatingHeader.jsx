@@ -7,6 +7,12 @@ export default function FloatingHeader({ registrationUrl, isMusicPlaying, onTogg
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const headerRef = useRef(null);
+  const hiddenRef = useRef(false);
+  const updateHidden = next => {
+    if (hiddenRef.current === next) return;
+    hiddenRef.current = next;
+    setHidden(next);
+  };
 
   useEffect(() => {
     let anchor = window.scrollY;
@@ -14,11 +20,13 @@ export default function FloatingHeader({ registrationUrl, isMusicPlaying, onTogg
     const update = () => {
       frame = 0;
       const current = Math.max(0, window.scrollY);
-      if (current < 90 || menuOpen || headerRef.current?.querySelector(':focus-visible')) {
-        setHidden(false);
+      const focus = document.activeElement;
+      const keyboardFocus = focus instanceof Element && focus.matches(':focus-visible') && headerRef.current?.contains(focus);
+      if (current < 90 || menuOpen || keyboardFocus) {
+        updateHidden(false);
         anchor = current;
       } else if (Math.abs(current - anchor) > 12) {
-        setHidden(current > anchor);
+        updateHidden(current > anchor);
         anchor = current;
       }
     };
@@ -40,7 +48,7 @@ export default function FloatingHeader({ registrationUrl, isMusicPlaying, onTogg
   }, [menuOpen]);
 
   return (
-    <header ref={headerRef} className="landing-header floating-header" data-hidden={hidden && !menuOpen} onFocus={() => setHidden(false)}>
+    <header ref={headerRef} className="landing-header floating-header" data-hidden={hidden && !menuOpen} onFocus={() => updateHidden(false)}>
       <a className="landing-brand" href="#home" aria-label="HexWartz home" onClick={() => setMenuOpen(false)}>
         <img src="/assets/branding/hexwartz_crest_nav.webp" alt="" className="landing-brand-crest" width="42" height="42" decoding="async" />
         <div className="landing-brand-text"><span className="landing-brand-name">HexWartz</span><span className="landing-brand-sub">Sharda University Agra</span></div>
@@ -53,7 +61,7 @@ export default function FloatingHeader({ registrationUrl, isMusicPlaying, onTogg
         <button type="button" className="header-music-toggle" onClick={onToggleMusic} aria-label={isMusicPlaying ? 'Mute sound' : 'Play sound'} aria-pressed={isMusicPlaying} title={isMusicPlaying ? 'Mute sound' : 'Play sound'}>
           {isMusicPlaying ? <Volume2 size={18} /> : <VolumeX size={18} />}
         </button>
-        <button className="landing-menu-toggle" type="button" aria-controls="main-navigation" aria-expanded={menuOpen} aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} onClick={() => { setHidden(false); setMenuOpen(open => !open); }}>
+        <button className="landing-menu-toggle" type="button" aria-controls="main-navigation" aria-expanded={menuOpen} aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} onClick={() => { updateHidden(false); setMenuOpen(open => !open); }}>
           {menuOpen ? <X size={21} /> : <Menu size={21} />}
         </button>
       </div>

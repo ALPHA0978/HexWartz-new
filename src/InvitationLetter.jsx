@@ -1,12 +1,24 @@
 import React, { useEffect, useRef } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight, Sparkles, X } from 'lucide-react';
 import './invitation.css';
+
+const PAPER = {
+  sealed: { opacity: 0, y: 110, scale: 0.86, rotate: -2 },
+  opened: {
+    opacity: 1, y: 0, scale: 1, rotate: 0,
+    transition: { type: 'spring', stiffness: 190, damping: 27, mass: 0.9, delay: 0.7, staggerChildren: 0.05, delayChildren: 0.15 },
+  },
+};
+const INK = {
+  sealed: { opacity: 0, y: 8 },
+  opened: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+};
 
 export default function InvitationLetter({ isOpen, onOpen, onClose, registrationUrl, whatsappUrl }) {
   const dialogRef = useRef(null);
   const endRef = useRef(null);
-  const autoOpened = useRef(isOpen);
+  const autoOpened = useRef(false);
   const reduceMotion = useReducedMotion();
   const duration = reduceMotion ? 0 : 0.7;
 
@@ -36,7 +48,7 @@ export default function InvitationLetter({ isOpen, onOpen, onClose, registration
   }, [isOpen]);
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <section className="letter-finale" id="invitation" aria-labelledby="letter-finale-title">
         <p className="contact-eyebrow">ONE LAST DELIVERY FROM THE OWL POST</p>
         <h2 id="letter-finale-title">A little magic, addressed to you.</h2>
@@ -63,31 +75,29 @@ export default function InvitationLetter({ isOpen, onOpen, onClose, registration
                 <motion.div className="invitation-wax-seal" initial={{ scale: 1, opacity: 1 }} animate={{ scale: 1.35, opacity: 0, rotate: -18 }} transition={{ duration: reduceMotion ? 0 : 0.35 }}>H</motion.div>
               </motion.div>
               <motion.article className="invitation-parchment"
-                initial={{ opacity: 0, y: reduceMotion ? 0 : 110, scale: reduceMotion ? 1 : 0.86, rotate: reduceMotion ? 0 : -2 }}
-                animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-                transition={{ duration: reduceMotion ? 0 : 1, delay: reduceMotion ? 0 : 0.85, ease: [0.22, 1, 0.36, 1] }}>
+                variants={PAPER} initial={reduceMotion ? false : 'sealed'} animate="opened">
                 <div className="invitation-letterhead">
                   <img src="/assets/branding/hexwartz_crest_nav.webp" width="70" height="70" alt="HexWartz crest" />
                   <span>HEXWARTZ</span>
                   <small>SHARDA UNIVERSITY AGRA</small>
                 </div>
                 <div className="invitation-rule"><span>THE OWL POST</span><Sparkles size={16} aria-hidden="true" /><span>CLASS OF 2026</span></div>
-                <p className="invitation-salutation">Dear maker of extraordinary things,</p>
-                <h2 id="invitation-title">Your next chapter<br />begins at HexWartz.</h2>
-                <p>Some letters carry news. This one carries a possibility.</p>
-                <p>You are invited to bring your curiosity, courage, and brightest ideas to HexWartz. Gather your fellowship, choose your House, and turn a spark of imagination into something the world can use.</p>
-                <p>On <strong>13–14 November 2026</strong>, the halls of <strong>Sharda University Agra</strong> await the builders who dare to begin. Your story belongs among them.</p>
-                <p className="invitation-closing">The magic is in what you make.</p>
-                <div className="invitation-signature">The HexWartz Guild<span>Four Houses. One extraordinary beginning.</span></div>
-                <div className="invitation-actions">
+                <motion.p variants={INK} className="invitation-salutation">Dear maker of extraordinary things,</motion.p>
+                <motion.h2 variants={INK} id="invitation-title">Your next chapter<br />begins at HexWartz.</motion.h2>
+                <motion.p variants={INK}>Some letters carry news. This one carries a possibility.</motion.p>
+                <motion.p variants={INK}>You are invited to bring your curiosity, courage, and brightest ideas to HexWartz. Gather your fellowship, choose your House, and turn a spark of imagination into something the world can use.</motion.p>
+                <motion.p variants={INK}>On <strong>13–14 November 2026</strong>, the halls of <strong>Sharda University Agra</strong> await the builders who dare to begin. Your story belongs among them.</motion.p>
+                <motion.p variants={INK} className="invitation-closing">The magic is in what you make.</motion.p>
+                <motion.div variants={INK} className="invitation-signature">The HexWartz Guild<span>Four Houses. One extraordinary beginning.</span></motion.div>
+                <motion.div variants={INK} className="invitation-actions">
                   <a href={registrationUrl} target="_blank" rel="noopener noreferrer">Begin your journey <ArrowUpRight size={16} aria-hidden="true" /></a>
                   <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">Join the fellowship <ArrowUpRight size={16} aria-hidden="true" /></a>
-                </div>
+                </motion.div>
               </motion.article>
             </motion.div>
           )}
         </AnimatePresence>
       </dialog>
-    </>
+    </MotionConfig>
   );
 }

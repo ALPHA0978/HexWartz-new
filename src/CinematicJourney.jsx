@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { ArrowDown, ArrowUpRight } from 'lucide-react';
+import AnimatedWords from './AnimatedWords';
 
 const SCENES = [
   { name: 'The destination', kicker: 'YOUR REAL-WORLD GREAT HALL', title: 'A little magic. A real place to make it happen.', description: 'Sharda University Agra. 24 hours of ideas, new friendships, and building something that matters.', image: '/assets/v2/sharda%20agra.jpg', alt: 'Sharda University Agra campus in daylight', origin: '50% 56%' },
@@ -18,6 +19,8 @@ export default function CinematicJourney({ enabled }) {
     const stage = section.querySelector('.cinematic-stage');
     const scenes = [...section.querySelectorAll('.journey-scene')];
     const chapters = [...section.querySelectorAll('.journey-chapter')];
+    const images = scenes.map(scene => scene.querySelector('img'));
+    let previousChapter = -1;
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     let start = 0;
     let distance = 1;
@@ -35,10 +38,13 @@ export default function CinematicJourney({ enabled }) {
       scenes.forEach((scene, index) => {
         const local = clamp((progress - index / SCENES.length) * SCENES.length);
         scene.style.opacity = preference.matches ? Number(index === chapter) : fades[index];
-        scene.querySelector('img').style.transform = preference.matches ? 'none' : `scale(${1.02 + local * 0.22})`;
-        scene.setAttribute('aria-hidden', String(index !== chapter));
-        chapters[index].setAttribute('aria-pressed', String(index === chapter));
+        images[index].style.transform = preference.matches ? 'none' : `scale(${1.02 + local * 0.22})`;
+        if (chapter !== previousChapter) {
+          scene.setAttribute('aria-hidden', String(index !== chapter));
+          chapters[index].setAttribute('aria-pressed', String(index === chapter));
+        }
       });
+      previousChapter = chapter;
       section.style.setProperty('--journey-progress', progress);
     };
     const schedule = () => { if (active && !frame) frame = requestAnimationFrame(update); };
@@ -93,7 +99,7 @@ export default function CinematicJourney({ enabled }) {
             <div className="journey-scene-shade" />
             <div className="journey-scene-copy">
               <p className="journey-scene-kicker"><span>0{index + 1}</span>{scene.kicker}</p>
-              <h2>{scene.title}</h2>
+              <h2><AnimatedWords>{scene.title}</AnimatedWords></h2>
               <p className="journey-scene-description">{scene.description}</p>
               {index === SCENES.length - 1 && <span className="journey-scene-note">A 24-hour on-campus hackathon</span>}
             </div>
